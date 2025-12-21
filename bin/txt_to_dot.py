@@ -27,24 +27,20 @@ def parse_deck(txt_path):
     return cards
 
 
-def generate_dotfrag(deck_num, deck_cards, card_db):
-    lines = [
-        f"digraph deck{deck_num} {{",
-    ]
+def generate_deck_dot(deck_num, deck_cards, card_db):
+    lines = [f"digraph deck{deck_num} {{"]
 
     card_index = 1
     for count, name in deck_cards:
         card = card_db.get(name)
         if not card:
-            print(f"Warning: Card '{name}' not found in database", file=sys.stderr)
-            card_id = "x_xxx"
-        else:
-            card_id = card["id"]
+            print(f"Error: Card '{name}' not found in database", file=sys.stderr)
+            sys.exit(1)
 
         for _ in range(count):
             node_id = f"D{deck_num}_{card_index:02d}"
             lines.append(
-                f'    {node_id} [type="Card", card_id="{card_id}", exerted="0", damage="0", label="{name}"];'
+                f'    {node_id} [type="Card", card_id="{card["id"]}", exerted="0", damage="0", label="{name}"];'
             )
             card_index += 1
 
@@ -64,7 +60,7 @@ def main():
     card_db = load_cards()
     deck_cards = parse_deck(txt_path)
 
-    output = generate_dotfrag(deck_num, deck_cards, card_db)
+    output = generate_deck_dot(deck_num, deck_cards, card_db)
     print(output)
 
 

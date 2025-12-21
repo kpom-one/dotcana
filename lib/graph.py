@@ -26,14 +26,6 @@ def get_node_attr(G: nx.MultiDiGraph, node: str, attr: str, default=None):
     return val
 
 
-def get_edge_attr(G: nx.MultiDiGraph, u: str, v: str, key: str, attr: str, default=None):
-    """Get an edge attribute."""
-    val = G.edges[u, v, key].get(attr, default)
-    if isinstance(val, str):
-        val = val.strip('"')
-    return val
-
-
 def nodes_by_type(G: nx.MultiDiGraph, node_type: str) -> list[str]:
     """Get all nodes of a given type."""
     return [n for n in G.nodes() if get_node_attr(G, n, "type") == node_type]

@@ -28,19 +28,20 @@ All tools communicate through one shared contract: **the DOT file**.
 
 ```
 dotcana/
-├── template.dot                     # Universal board structure (zones, players, OWNS)
-├── all_cards.json                   # Card database (name → stats, abilities, etc.)
-├── SCHEMA.md                        # This file
-│
-├── matchup_<name>/
-│   ├── deck1.dotfrag                # P1's card instances
-│   ├── deck2.dotfrag                # P2's card instances
-│   └── <seed>/
-│       └── game.dot                 # Initial state (shuffled, hands drawn)
-│           └── <action>/
-│               └── game.dot         # State after action
-│                   └── <action>/
-│                       └── game.dot # And so on...
+├── data/
+│   ├── template.dot                 # Universal board structure (zones, players, OWNS)
+│   ├── cards.json                   # Card database (name → stats, abilities, etc.)
+│   └── decks/
+│       └── *.txt                    # Deck lists (count + card name per line)
+├── output/
+│   └── <hash>/                      # Matchup directory (hash of deck files)
+│       ├── deck1.dot                # P1's card instances (full digraph)
+│       ├── deck2.dot                # P2's card instances (full digraph)
+│       ├── game.dot                 # Initial state (unshuffled)
+│       └── <action>/
+│           └── game.dot             # State after action
+│               └── <action>/
+│                   └── game.dot     # And so on...
 ```
 
 ### Path as Game Log
@@ -133,6 +134,8 @@ These represent legal actions. Computed by rules engine.
 
 ## File Formats
 
+**Note:** Examples below use `-[LABEL]->` shorthand for readability. Actual DOT syntax is `-> [label="LABEL"]`.
+
 ### template.dot
 
 Universal game structure. Same for every game.
@@ -176,15 +179,16 @@ digraph lorcana {
 }
 ```
 
-### deck.dotfrag
+### deck.dot
 
-Card instances for one player. Fragment (not complete graph).
+Card instances for one player. Full digraph (merged into game.dot during init).
 
 ```dot
-// Player 1 deck - 60 cards
-D1_01 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
-D1_02 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
-// ... 60 total
+digraph deck1 {
+    D1_01 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
+    D1_02 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
+    // ... 60 total
+}
 ```
 
 ### game.dot
@@ -199,7 +203,7 @@ digraph lorcana {
     P2 [type="Player", lore="2", ink_drops="1"];
     // ... zones, OWNS edges ...
 
-    // --- Cards (from dotfrags) ---
+    // --- Cards (from deck1.dot + deck2.dot) ---
     D1_01 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
     // ... all 120 cards ...
 
@@ -228,33 +232,24 @@ Initialize a game from template and decks.
 
 ```bash
 
-just match decks/1.txt decks/2.txt
-# create a 4 char matchup hash
+just match data/decks/deck1.txt data/decks/deck2.txt
+# Creates 4-char matchup hash from deck file paths
 # mkdir output/<hash>
-# runs data/decks/txt_to_dotfrag.py
-#   output -> output/<hash>/a.dotfrag output/<hash>/b.dotfrag
+# Runs: data/decks/txt_to_dot.py for each deck
+#   Outputs: output/<hash>/deck1.dot, output/<hash>/deck2.dot
+# Runs: bin/rules-engine.py init <hash>
+#   Merges template + decks -> output/<hash>/game.dot
 
-
-just shuffle <hash> <seed>
-# mkdir output/<hash>/<seed>
-# Call RulesEngine
-#   output -> output/<hash>/<seed>/game.dot
-#   this will have N actions
-
-just play <hash> <seed> <action_list>
-# TODO: Walk backwards to only play the necessary things
-# current = output/<hash>/<seed>
-
-# for action in action_list.split("/")
-#     current += "/" + action
-
-#     if exists(current + "/game.dot")
-#       continue
-
-#     if not dir_exists(current):
-#        mkdir current
-
-#     Call RulesEngine
-#        output -> current + "/game.dot"
+just play <hash> <actions>
+# Walks action path, applying each step
+# Examples:
+#   just play fe69              # Show current state
+#   just play fe69 a0           # Apply action a0
+#   just play fe69 a0/b2/c1     # Apply sequence: a0, then b2, then c1
+#
+# For each action:
+#   - Skip if output/<hash>/<path>/game.dot exists
+#   - Otherwise: bin/rules-engine.py <parent>/<action_id>
+#     Reads parent/game.dot, applies action, writes <action_id>/game.dot
 
 ```

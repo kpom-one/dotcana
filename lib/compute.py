@@ -23,24 +23,10 @@ def add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str) -> st
 
 def compute_can_pass(G: nx.MultiDiGraph) -> None:
     """Add CAN_PASS edge for current player."""
-    # Find current player from CURRENT_TURN edge
-    game_nodes = nodes_by_type(G, "Game")
-    if not game_nodes:
-        # Fallback: look for GAME node
-        game_nodes = [n for n in G.nodes() if n.strip('"') == "GAME"]
-
-    if not game_nodes:
-        return
-
-    game = game_nodes[0]
-
-    # Find who has current turn
-    for u, v, key, data in G.edges(keys=True, data=True):
-        label = data.get("label", key)
-        if isinstance(label, str) and "CURRENT_TURN" in label:
-            current_player = v
-            add_can_edge(G, current_player, game, "CAN_PASS")
-            return
+    edges = edges_by_label(G, "CURRENT_TURN")
+    if edges:
+        game, player, _ = edges[0]  # GAME -> Player
+        add_can_edge(G, player, game, "CAN_PASS")
 
 
 def compute_can_ink(G: nx.MultiDiGraph) -> None:

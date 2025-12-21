@@ -44,33 +44,15 @@ def _merge_deck(G: nx.MultiDiGraph, deck_path: Path, deck_zone: str) -> None:
         position += 1
 
 
-def apply_action(G: nx.MultiDiGraph, action_id: str) -> nx.MultiDiGraph:
-    """
-    Apply an action to the game state.
-
-    action_id corresponds to an edge key or can be matched to a CAN_* edge.
-    """
-    # For now, actions are identified by finding the CAN_* edge
-    # In the future, action_id will map to a specific edge
-
-    # TODO: Implement action dispatch based on action type
-    # For now, just recompute (stub)
-
-    compute_all(G)
-    return G
-
-
 def show_actions(G: nx.MultiDiGraph) -> list[dict]:
     """Return list of available actions."""
     actions = []
     for i, (u, v, key, action_type) in enumerate(can_edges(G)):
-        # Generate a short action ID
-        action_id = _make_action_id(i)
         actions.append({
-            "id": action_id,
+            "id": _make_action_id(i),
             "type": action_type,
-            "from": u.strip('"'),
-            "to": v.strip('"'),
+            "from": u,
+            "to": v,
             "key": key,
         })
     return actions
