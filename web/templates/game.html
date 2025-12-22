@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lorcana Game Viewer</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        h1 {
+            color: #569cd6;
+            border-bottom: 2px solid #569cd6;
+            padding-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #858585;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #4ec9b0;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .state-view {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .state-view pre {
+            margin: 0;
+            color: #ce9178;
+            line-height: 1.6;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        .actions h2 {
+            color: #4ec9b0;
+            font-size: 18px;
+        }
+
+        .actions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .actions li {
+            margin: 8px 0;
+        }
+
+        .actions a {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #0e639c;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .actions a:hover {
+            background: #1177bb;
+        }
+
+        .empty-state {
+            color: #858585;
+            font-style: italic;
+            padding: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lorcana Game Viewer</h1>
+
+    <div class="breadcrumb">
+        {% for name, path in breadcrumbs %}
+            {% if not loop.last %}
+                <a href="/{{ path }}">{{ name }}</a> /
+            {% else %}
+                {{ name }}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if state %}
+        <div class="state-view">
+            <pre>{{ state }}</pre>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            No game state here. Navigate to an action directory or shuffle a game.
+        </div>
+    {% endif %}
+
+    {% if children %}
+        <div class="actions">
+            <h2>{% if state %}Available Actions:{% else %}Directories:{% endif %}</h2>
+            <ul>
+                {% for child in children %}
+                    <li>
+                        <a href="/{% if current_path %}{{ current_path }}/{% endif %}{{ child }}">
+                            {% if action_descriptions and child in action_descriptions %}
+                                {{ action_descriptions[child] }}
+                            {% else %}
+                                {{ child }}
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</body>
+</html>

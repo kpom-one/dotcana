@@ -13,7 +13,7 @@ default:
 setup:
     python3 -m venv .venv
     .venv/bin/pip install --upgrade pip
-    .venv/bin/pip install networkx pydot
+    .venv/bin/pip install networkx pydot flask
     @echo "Environment ready. Dependencies installed."
 
 # Clear all output
@@ -64,3 +64,24 @@ show hash seed="":
 # Usage: just play output/b013/0123456.0123456.ab/i49/
 play path:
     {{python}} bin/rules-engine.py play "{{path}}"
+
+# Start web viewer
+# Usage: just serve
+serve:
+    @echo "Starting web viewer at http://localhost:5000"
+    @echo "Press Ctrl+C to stop"
+    {{python}} web/app.py
+
+# Set up deterministic test game
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    just clear
+    just match data/decks/bs01.txt data/decks/rp01.txt >/dev/null
+    just shuffle b013 "0123456.0123456.ab" >/dev/null
+    just play output/b013/0123456.0123456.ab/i49 >/dev/null
+    just play output/b013/0123456.0123456.ab/i49/e35 >/dev/null
+
+    echo "Test game ready:"
+    echo "  just play output/b013/0123456.0123456.ab/i49/e35"

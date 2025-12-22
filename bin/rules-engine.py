@@ -142,6 +142,9 @@ def execute_action(state: LorcanaState, action_type: str, from_node: str, to_nod
             # Add current turn edge to other player
             state.graph.add_edge(game, other_player, label="CURRENT_TURN")
 
+            # Give the new player 1 ink drop for their turn
+            state.graph.nodes[other_player]['ink_drops'] = '1'
+
         # Increment turn counter
         turn = int(get_node_attr(state.graph, 'game', 'turn', 0))
         state.graph.nodes['game']['turn'] = str(turn + 1)
