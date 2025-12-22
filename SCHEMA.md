@@ -8,7 +8,12 @@ Dotcana represents Lorcana game state as a directed graph using DOT format. The 
 
 ```
      ┌──────────┐
-     │  start   │  Initialize game from template + decks
+     │  match   │  Initialize game from template + decks
+     └────┬─────┘
+          │
+          ▼
+     ┌──────────┐
+     │ shuffle  │  Shuffle decks, draw starting hands
      └────┬─────┘
           │
           ▼
@@ -18,7 +23,7 @@ Dotcana represents Lorcana game state as a directed graph using DOT format. The 
           │
           ▼
     ┌────────────┐
-    │ visualizer │  Render game state (future)
+    │   serve    │  Web viewer (browse game tree)
     └────────────┘
 ```
 
@@ -42,15 +47,14 @@ dotcana/
 │           ├── deck1.dek            # P1's shuffled deck (53 cards, flat file)
 │           ├── deck2.dek            # P2's shuffled deck (53 cards, flat file)
 │           ├── game.dot             # State after shuffle (14 cards in hands)
-│           ├── e35/                 # Empty action directory (end turn)
-│           ├── i49/                 # Empty action directory (ink card)
-│           ├── i64/                 # Empty action directory (ink card)
-│           └── ...                  # One directory per legal action
-│               └── (populated when action applied)
-│                   ├── game.dot     # State after action
-│                   ├── deck1.dek
-│                   ├── deck2.dek
-│                   └── <action>/    # Next action directories...
+│           ├── e35/                 # Action directory (end turn) - pre-created empty
+│           ├── i49/                 # Action directory (ink card) - pre-created empty
+│           │   ├── game.dot         # State after inking (created on first visit)
+│           │   ├── deck1.dek
+│           │   ├── deck2.dek
+│           │   └── e35/             # Next action directories...
+│           └── i64/                 # Action directory (ink different card)
+│               └── (empty until visited)
 ```
 
 ### Path as Game Log
@@ -173,7 +177,7 @@ digraph lorcana {
     game [type="Game", turn="0"];
 
     // Players
-    p1 [type="Player", lore="0", ink_drops="1"];
+    p1 [type="Player", lore="0", ink_drops="0"];
     p2 [type="Player", lore="0", ink_drops="1"];
 
     game -[CURRENT_TURN]-> p1;
@@ -292,4 +296,39 @@ just show <hash> [<seed>]
 #   just show b013                     # Before shuffle
 #   just show b013 0123456.0123456.ab  # After shuffle
 # Lists all CAN_* edges (legal actions)
+```
+
+### play
+
+Navigate to a state and apply action if needed.
+
+```bash
+just play <path>
+# Example: just play output/b013/0123456.0123456.ab/i49
+# If directory is empty (no game.dot), applies the action
+# Loads parent state, executes action, saves new state
+# Shows available next actions
+```
+
+### serve
+
+Start web viewer to browse game tree.
+
+```bash
+just serve
+# Starts Flask server at http://localhost:5000
+# Browse game states visually
+# Click unexplored actions → state computed on-demand
+# Shows ASCII game state visualization
+```
+
+### test
+
+Set up deterministic test game.
+
+```bash
+just test
+# Runs: clear → match → shuffle → play i49 → play e35
+# Creates reproducible game state for testing
+# Outputs URL to view in web browser
 ```
