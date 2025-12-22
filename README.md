@@ -40,12 +40,14 @@ See `SCHEMA.md` for details.
 - ✓ Game initialization (template + decks → game.dot)
 - ✓ Deterministic shuffle with hand-spec seeds
 - ✓ Lazy card node creation (cards only in graph when drawn)
-- ✓ Action computation (CAN_PASS only)
+- ✓ Action computation (CAN_PASS, CAN_INK)
+- ✓ Semantic action IDs (e=end, i=ink, p=play, etc.)
+- ✓ Action directories pre-created for exploration
 - ✓ State visualization via DOT
 
 ## What Doesn't
 
-- Action application (play, ink, quest, challenge, etc.)
+- Action application (applying actions to mutate state)
 - Turn advancement
 - Lore tracking
 - Combat resolution

@@ -3,6 +3,7 @@ Compute legal actions (CAN_* edges) from Lorcana game state.
 """
 import networkx as nx
 from lib.core.graph import nodes_by_type, get_node_attr, edges_by_label
+from lib.lorcana.cards import get_card_db
 
 
 def clear_can_edges(G: nx.MultiDiGraph) -> None:
@@ -31,9 +32,38 @@ def compute_can_pass(G: nx.MultiDiGraph) -> None:
 
 def compute_can_ink(G: nx.MultiDiGraph) -> None:
     """Add CAN_INK edges for inkable cards in current player's hand."""
-    # TODO: Check ink_drops remaining, card is inkable
-    # For now, stub - no ink actions
-    pass
+    # Get current player from CURRENT_TURN edge
+    edges = edges_by_label(G, "CURRENT_TURN")
+    if not edges:
+        return
+    game, player, _ = edges[0]  # Game -> Player
+
+    # Check ink_drops > 0
+    ink_drops = int(get_node_attr(G, player, 'ink_drops', 0))
+    if ink_drops <= 0:
+        return
+
+    # Get zones
+    hand_zone = f"z.{player}.hand"
+    inkwell_zone = f"z.{player}.ink"
+
+    # Find cards IN hand
+    cards_in_hand = [u for u, v, _ in edges_by_label(G, "IN") if v == hand_zone]
+
+    # Check each card for inkwell property
+    card_db = get_card_db()
+    for card_node in cards_in_hand:
+        card_id = int(get_node_attr(G, card_node, 'card_id'))
+
+        # Find card by ID in database
+        card_data = None
+        for card in card_db.values():
+            if card['id'] == card_id:
+                card_data = card
+                break
+
+        if card_data and card_data.get('inkwell'):
+            add_can_edge(G, card_node, inkwell_zone, "CAN_INK")
 
 
 def compute_can_play(G: nx.MultiDiGraph) -> None:

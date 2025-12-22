@@ -42,10 +42,15 @@ dotcana/
 │           ├── deck1.dek            # P1's shuffled deck (53 cards, flat file)
 │           ├── deck2.dek            # P2's shuffled deck (53 cards, flat file)
 │           ├── game.dot             # State after shuffle (14 cards in hands)
-│           └── <action>/
-│               └── game.dot         # State after action
-│                   └── <action>/
-│                       └── game.dot # And so on...
+│           ├── e35/                 # Empty action directory (end turn)
+│           ├── i49/                 # Empty action directory (ink card)
+│           ├── i64/                 # Empty action directory (ink card)
+│           └── ...                  # One directory per legal action
+│               └── (populated when action applied)
+│                   ├── game.dot     # State after action
+│                   ├── deck1.dek
+│                   ├── deck2.dek
+│                   └── <action>/    # Next action directories...
 ```
 
 ### Path as Game Log
@@ -53,24 +58,42 @@ dotcana/
 The directory path encodes the complete game history:
 
 ```
-matchup_x/99281/a0/b2/a1/c0/game.dot
-         │      └─────────┘
-         │           │
-         seed    action sequence (game log)
+output/b013/0123456.0123456.ab/i49/e35/p2c/game.dot
+       │    └────seed─────┘  └─action sequence─┘
+       └─matchup hash
 ```
 
 - **Branching**: Explore alternate lines from any state
 - **Replay**: Walk the path
 - **Analysis**: Diff any two game.dot files
 - **Card tracking**: Query card across all paths
+- **Tab completion**: Action directories pre-created, browsable with `ls`
 
 ### Action IDs
 
-Two base36 characters (0-9, a-z): `a0/`, `b1/`, `zz/`
+Semantic hash-based format: `[prefix][xx]`
 
-- 1296 unique IDs per game state (plenty for available actions)
-- 3 characters per directory level
-- Sufficient for 200-300 action games
+**Prefixes:**
+- `e` - End turn (pass)
+- `i` - Ink card
+- `p` - Play card
+- `q` - Quest
+- `c` - Challenge
+- `a` - Activate ability
+
+**Hash:** 2-char MD5 hex of `from_node:to_node`
+
+**Examples:**
+- `e35/` - End turn
+- `i49/` - Ink p1.jasmine_resourceful_infiltrator.a
+- `p2c/` - Play p1.tipo_growing_son.a
+- `c7a/` - Challenge attacker → target
+
+**Properties:**
+- ✓ Self-documenting (`ls` shows action types)
+- ✓ Deterministic (same edge always gets same ID)
+- ✓ Collision-resistant (256 possibilities per prefix)
+- ✓ Stable across runs (hash-based, not order-based)
 
 ---
 

@@ -93,10 +93,13 @@ def load_deck(base_path: str | Path, player: int) -> list[str]:
         player: Player number (1 or 2)
 
     Returns:
-        List of card IDs
+        List of card IDs, or empty list if file doesn't exist
     """
     deck_file = _DECK1_FILE if player == 1 else _DECK2_FILE
     path = Path(base_path) / deck_file
+
+    if not path.exists():
+        return []
 
     with open(path) as f:
         return [line.strip() for line in f if line.strip()]

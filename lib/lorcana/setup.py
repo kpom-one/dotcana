@@ -12,6 +12,7 @@ from lib.lorcana.cards import get_card_db
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.deck import build_shuffled_deck
 from lib.lorcana.compute import compute_all
+from lib.lorcana.actions import make_action_id
 
 
 def init_game(deck1_txt: str | Path, deck2_txt: str | Path) -> tuple[nx.MultiDiGraph, str]:
@@ -108,23 +109,37 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
 
 
 def show_actions(G: nx.MultiDiGraph) -> list[dict]:
-    """Return list of available actions."""
+    """Return list of available actions with computed descriptions."""
     actions = []
-    for i, (u, v, key, action_type) in enumerate(can_edges(G)):
+    # Sort edges by action_type for deterministic ordering
+    sorted_edges = sorted(can_edges(G), key=lambda e: (e[3], e[0], e[1]))  # (action_type, from, to)
+
+    for u, v, key, action_type in sorted_edges:
+        # Generate stable action ID from edge content
+        action_id = make_action_id(action_type, u, v)
+
+        # Compute description from action_type + node IDs
+        if action_type == "CAN_PASS":
+            description = "end"
+        elif action_type == "CAN_INK":
+            description = f"ink:{u}"
+        elif action_type == "CAN_PLAY":
+            description = f"play:{u}"
+        elif action_type == "CAN_QUEST":
+            description = f"quest:{u}"
+        elif action_type == "CAN_CHALLENGE":
+            description = f"challenge:{u}->{v}"
+        elif action_type == "CAN_ACTIVATE":
+            description = f"activate:{u}->{v}"
+        else:
+            description = action_type.lower()
+
         actions.append({
-            "id": _make_action_id(i),
+            "id": action_id,
             "type": action_type,
             "from": u,
             "to": v,
             "key": key,
+            "description": description,
         })
     return actions
-
-
-def _make_action_id(index: int) -> str:
-    """Generate a 2-char base36 action ID."""
-    chars = "0123456789abcdefghijklmnopqrstuvwxyz"
-    if index < 36:
-        return chars[index]
-    else:
-        return chars[index // 36] + chars[index % 36]

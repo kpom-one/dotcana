@@ -36,6 +36,15 @@ def cmd_shuffle(matchdir: str, seed: str) -> None:
     print(seed)
     print(f"[rules-engine] shuffle: seed={seed} -> {output}", file=sys.stderr)
 
+    # Show available actions
+    G = load_dot(output)
+    actions = show_actions(G)
+
+    if actions:
+        print("\nAvailable actions:", file=sys.stderr)
+        for a in actions:
+            print(f"  [{a['id']}] {a['description']}", file=sys.stderr)
+
 
 def cmd_show(game_dot: str) -> None:
     """Show available actions."""
@@ -50,7 +59,7 @@ def cmd_show(game_dot: str) -> None:
 
     print("Available actions:")
     for a in actions:
-        print(f"  [{a['id']}] {a['type']}: {a['from']} -> {a['to']}")
+        print(f"  [{a['id']}] {a['description']}")
 
 
 def main():
