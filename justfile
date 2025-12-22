@@ -38,20 +38,12 @@ match deck1 deck2:
 
 # Shuffle decks and draw starting hands
 # Usage: just shuffle b013 "0123456.abcdefg.xy"
-#    or: just shuffle b013 random
 shuffle hash seed:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Generate random seed if requested
-    if [[ "{{seed}}" == "random" ]]; then
-        seed=$({{python}} -c "from lib.seed import generate_random_seed; print(generate_random_seed())")
-    else
-        seed="{{seed}}"
-    fi
-
     # Shuffle and print seed
-    result=$({{python}} bin/rules-engine.py shuffle "output/{{hash}}" "${seed}")
+    result=$({{python}} bin/rules-engine.py shuffle "output/{{hash}}" "{{seed}}")
     echo "Shuffled: ${result}"
     echo "  output/{{hash}}/${result}/deck1.dek"
     echo "  output/{{hash}}/${result}/deck2.dek"

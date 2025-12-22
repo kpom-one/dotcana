@@ -13,8 +13,8 @@ from pathlib import Path
 # Add lib to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.graph import load_dot, save_dot, can_edges
-from lib.engine import init_game, shuffle_and_draw, show_actions
+from lib.core.graph import load_dot, save_dot, can_edges
+from lib.lorcana.setup import init_game, shuffle_and_draw, show_actions
 
 
 def cmd_init(deck1: str, deck2: str) -> None:

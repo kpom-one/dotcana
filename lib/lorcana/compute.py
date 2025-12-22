@@ -1,8 +1,8 @@
 """
-Compute legal actions (CAN_* edges) from game state.
+Compute legal actions (CAN_* edges) from Lorcana game state.
 """
 import networkx as nx
-from lib.graph import nodes_by_type, get_node_attr, edges_by_label
+from lib.core.graph import nodes_by_type, get_node_attr, edges_by_label
 
 
 def clear_can_edges(G: nx.MultiDiGraph) -> None:
