@@ -53,14 +53,11 @@ def compute_can_ink(G: nx.MultiDiGraph) -> None:
     # Check each card for inkwell property
     card_db = get_card_db()
     for card_node in cards_in_hand:
-        card_id = int(get_node_attr(G, card_node, 'card_id'))
+        # Extract base name: "p1.tinker_bell_giant_fairy.a" -> "tinker_bell_giant_fairy"
+        base_name = card_node.split('.', 1)[1].rsplit('.', 1)[0]
 
-        # Find card by ID in database
-        card_data = None
-        for card in card_db.values():
-            if card['id'] == card_id:
-                card_data = card
-                break
+        # O(1) lookup by normalized name
+        card_data = card_db.get(base_name)
 
         if card_data and card_data.get('inkwell'):
             add_can_edge(G, card_node, inkwell_zone, "CAN_INK")

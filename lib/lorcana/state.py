@@ -10,7 +10,6 @@ from pathlib import Path
 
 from lib.core.graph import load_dot, save_dot, load_deck, save_deck, GAME_FILE, can_edges
 from lib.lorcana.cards import get_card_db
-from lib.lorcana.deck import normalize_card_name
 from lib.lorcana.compute import compute_all
 from lib.lorcana.actions import make_action_id
 
@@ -137,20 +136,15 @@ class LorcanaState:
         """
         card_db = get_card_db()
 
-        # Extract base card name
+        # Extract base card name (remove copy suffix)
         base_name = card_id.rsplit('.', 1)[0]
 
-        # Reverse lookup in card database
-        original_name = None
-        for name in card_db.keys():
-            if normalize_card_name(name) == base_name:
-                original_name = name
-                break
+        # O(1) lookup by normalized name
+        card_data = card_db.get(base_name)
 
-        if not original_name:
+        if not card_data:
             raise ValueError(f"Card not found for ID: {card_id}")
 
-        card_data = card_db[original_name]
         node_id = f"p{player}.{card_id}"
 
         self.graph.add_node(
@@ -159,7 +153,7 @@ class LorcanaState:
             card_id=card_data["id"],
             exerted="0",
             damage="0",
-            label=original_name
+            label=base_name
         )
 
         return node_id
