@@ -8,10 +8,10 @@ Supports both usage patterns:
 import networkx as nx
 from pathlib import Path
 
-from lib.core.graph import load_dot, save_dot, load_deck, save_deck, GAME_FILE, can_edges
+from lib.core.graph import load_dot, save_dot, load_deck, save_deck, GAME_FILE
+from lib.core.navigation import write_path_file, write_actions_file
 from lib.lorcana.cards import get_card_db
 from lib.lorcana.compute import compute_all
-from lib.lorcana.actions import make_action_id
 
 
 class LorcanaState:
@@ -47,16 +47,17 @@ class LorcanaState:
         self.deck2_ids = load_deck(self.path, player=2)
 
     def save(self):
-        """Save graph and decks to filesystem, creating action directories."""
+        """Save graph, decks, and navigation files to filesystem."""
+        from lib.lorcana.setup import show_actions
+
         save_dot(self.graph, self.path / GAME_FILE)
         save_deck(self.deck1_ids, self.path, player=1)
         save_deck(self.deck2_ids, self.path, player=2)
 
-        # Create empty directories for all possible actions
-        for u, v, key, action_type in can_edges(self.graph):
-            action_id = make_action_id(action_type, u, v)
-            action_dir = self.path / action_id
-            action_dir.mkdir(exist_ok=True)
+        # Write navigation files
+        write_path_file(self.path)
+        actions = show_actions(self.graph)
+        write_actions_file(self.path, actions)
 
     # ========== Game Operations ==========
 

@@ -55,6 +55,14 @@ def get_node_attr(G: nx.MultiDiGraph, node: str, attr: str, default=None):
     return val
 
 
+def get_edge_attr(G: nx.MultiDiGraph, u: str, v: str, key: str, attr: str, default=None):
+    """Get an edge attribute, stripping quotes if present."""
+    val = G.edges[u, v, key].get(attr, default)
+    if isinstance(val, str):
+        val = val.strip('"')
+    return val
+
+
 def nodes_by_type(G: nx.MultiDiGraph, node_type: str) -> list[str]:
     """Get all nodes of a given type."""
     return [n for n in G.nodes() if get_node_attr(G, n, "type") == node_type]
@@ -72,15 +80,16 @@ def edges_by_label(G: nx.MultiDiGraph, label: str) -> list[tuple[str, str, str]]
     return result
 
 
-def can_edges(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str]]:
-    """Get all action edges. Returns list of (u, v, key, action_type)."""
+def can_edges(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str, str]]:
+    """Get all action edges. Returns list of (u, v, key, action_type, action_id)."""
     result = []
     for u, v, key, data in G.edges(keys=True, data=True):
         action_type = data.get("action_type")
         if action_type:
             if isinstance(action_type, str):
                 action_type = action_type.strip('"')
-            result.append((u, v, key, action_type))
+            action_id = get_edge_attr(G, u, v, key, "action_id", "")
+            result.append((u, v, key, action_type, action_id))
     return result
 
 

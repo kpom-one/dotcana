@@ -20,9 +20,9 @@ def clear_can_edges(G: nx.MultiDiGraph) -> None:
         G.remove_edge(*edge)
 
 
-def add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str) -> str:
-    """Add an action edge and return its key."""
-    key = G.add_edge(src, dst, action_type=action_type)
+def add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str, action_id: str) -> str:
+    """Add an action edge with sequential action_id."""
+    key = G.add_edge(src, dst, action_type=action_type, action_id=action_id)
     return key
 
 
@@ -38,6 +38,9 @@ def compute_all(G: nx.MultiDiGraph) -> None:
     edges_to_add.extend(compute_can_quest(G))
     # TODO: Add other mechanics (challenge, activate)
 
-    # Add all edges
-    for src, dst, action_type in edges_to_add:
-        add_can_edge(G, src, dst, action_type)
+    # Sort deterministically and assign sequential action IDs
+    sorted_edges = sorted(edges_to_add, key=lambda e: (e[2], e[0], e[1]))  # (action_type, from, to)
+
+    # Add edges with sequential action_ids
+    for idx, (src, dst, action_type) in enumerate(sorted_edges):
+        add_can_edge(G, src, dst, action_type, action_id=str(idx))

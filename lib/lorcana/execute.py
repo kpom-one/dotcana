@@ -8,7 +8,6 @@ from pathlib import Path
 import sys
 from lib.core.graph import can_edges
 from lib.lorcana.state import LorcanaState
-from lib.lorcana.actions import make_action_id
 from lib.lorcana.compute import compute_all
 from lib.lorcana.mechanics.end import execute_pass
 from lib.lorcana.mechanics.ink import execute_ink
@@ -44,8 +43,8 @@ def apply_action_at_path(path: Path) -> None:
 
     # Find the action edge that matches this ID
     action_found = False
-    for u, v, key, action_type in can_edges(parent.graph):
-        if make_action_id(action_type, u, v) == action_id:
+    for u, v, key, action_type, edge_action_id in can_edges(parent.graph):
+        if edge_action_id == action_id:
             # Apply the action (mutates parent.graph)
             execute_action(parent, action_type, u, v)
             action_found = True

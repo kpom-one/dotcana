@@ -12,7 +12,6 @@ from lib.lorcana.cards import get_card_db
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.deck import build_shuffled_deck
 from lib.lorcana.compute import compute_all
-from lib.lorcana.actions import make_action_id
 
 
 def init_game(deck1_txt: str | Path, deck2_txt: str | Path) -> tuple[nx.MultiDiGraph, str]:
@@ -109,15 +108,12 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
 
 
 def show_actions(G: nx.MultiDiGraph) -> list[dict]:
-    """Return list of available actions with computed descriptions."""
+    """Return list of available actions with pre-computed action IDs."""
     actions = []
     # Sort edges by action_type for deterministic ordering
     sorted_edges = sorted(can_edges(G), key=lambda e: (e[3], e[0], e[1]))  # (action_type, from, to)
 
-    for u, v, key, action_type in sorted_edges:
-        # Generate stable action ID from edge content
-        action_id = make_action_id(action_type, u, v)
-
+    for u, v, key, action_type, action_id in sorted_edges:
         # Compute description from action_type + node IDs
         if action_type == "CAN_PASS":
             description = "end"
