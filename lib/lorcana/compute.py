@@ -10,7 +10,7 @@ from lib.lorcana.mechanics.play import compute_can_play
 from lib.lorcana.mechanics.quest import compute_can_quest
 
 
-def clear_can_edges(G: nx.MultiDiGraph) -> None:
+def _clear_can_edges(G: nx.MultiDiGraph) -> None:
     """Remove all existing action edges from the graph."""
     to_remove = []
     for u, v, key, data in G.edges(keys=True, data=True):
@@ -20,15 +20,15 @@ def clear_can_edges(G: nx.MultiDiGraph) -> None:
         G.remove_edge(*edge)
 
 
-def add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str, action_id: str) -> str:
-    """Add an action edge with sequential action_id."""
-    key = G.add_edge(src, dst, action_type=action_type, action_id=action_id)
+def _add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str, action_id: str, description: str) -> str:
+    """Add an action edge with sequential action_id and description."""
+    key = G.add_edge(src, dst, action_type=action_type, action_id=action_id, description=description)
     return key
 
 
 def compute_all(G: nx.MultiDiGraph) -> None:
     """Recompute all CAN_* edges from current state."""
-    clear_can_edges(G)
+    _clear_can_edges(G)
 
     # Collect edges from all mechanics
     edges_to_add = []
@@ -42,5 +42,5 @@ def compute_all(G: nx.MultiDiGraph) -> None:
     sorted_edges = sorted(edges_to_add, key=lambda e: (e[2], e[0], e[1]))  # (action_type, from, to)
 
     # Add edges with sequential action_ids
-    for idx, (src, dst, action_type) in enumerate(sorted_edges):
-        add_can_edge(G, src, dst, action_type, action_id=str(idx))
+    for idx, (src, dst, action_type, description) in enumerate(sorted_edges):
+        _add_can_edge(G, src, dst, action_type, action_id=str(idx), description=description)

@@ -13,34 +13,33 @@ from pathlib import Path
 # Add lib to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.core.graph import load_dot, save_dot
-from lib.lorcana.setup import init_game, shuffle_and_draw, show_actions
+from lib.core.graph import get_node_attr, edges_by_label
+from lib.core.persistence import load_state
+from lib.core.navigation import read_actions_file
+from lib.lorcana.setup import init_game, shuffle_and_draw
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.execute import apply_action_at_path
 
 
 def cmd_init(deck1: str, deck2: str) -> None:
     """Create matchup from decklist files."""
-    G, matchup_hash = init_game(deck1, deck2)
-    output = Path("output") / matchup_hash / "game.dot"
-    save_dot(G, output)
+    matchup_hash = init_game(deck1, deck2)
 
     # Print hash to stdout for justfile to capture
     print(matchup_hash)
-    print(f"[rules-engine] init: {output}", file=sys.stderr)
+    print(f"[rules-engine] init: output/{matchup_hash}/game.dot", file=sys.stderr)
 
 
 def cmd_shuffle(matchdir: str, seed: str) -> None:
     """Shuffle decks and draw starting hands."""
     seed = shuffle_and_draw(matchdir, seed)
-    output = Path(matchdir) / seed / "game.dot"
+    output_path = Path(matchdir) / seed
 
     print(seed)
-    print(f"[rules-engine] shuffle: seed={seed} -> {output}", file=sys.stderr)
+    print(f"[rules-engine] shuffle: seed={seed} -> {output_path / 'game.dot'}", file=sys.stderr)
 
-    # Show available actions
-    G = load_dot(output)
-    actions = show_actions(G)
+    # Show available actions from actions.txt
+    actions = read_actions_file(output_path)
 
     if actions:
         print("\nAvailable actions:", file=sys.stderr)
@@ -50,8 +49,8 @@ def cmd_shuffle(matchdir: str, seed: str) -> None:
 
 def cmd_show(game_dot: str) -> None:
     """Show available actions."""
-    G = load_dot(game_dot)
-    actions = show_actions(G)
+    path = Path(game_dot).parent
+    actions = read_actions_file(path)
 
     print(f"[rules-engine] show: {game_dot}", file=sys.stderr)
 
@@ -66,37 +65,20 @@ def cmd_show(game_dot: str) -> None:
 
 def cmd_play(path: str) -> None:
     """Navigate to state, apply action if needed, show available actions."""
-    from pathlib import Path
-    from lib.core.graph import edges_by_label
-
     path = Path(path)
 
-    # Recursively ensure all parent states exist
-    def ensure_state_exists(p: Path):
-        """Recursively apply actions from root to this path."""
-        if (p / "game.dot").exists():
-            return  # State already exists
+    # Ensure state exists (recursively applies actions if needed)
+    apply_action_at_path(path)
 
-        # Check if parent exists, recurse if needed
-        parent = p.parent
-        if parent != p and not (parent / "game.dot").exists():
-            ensure_state_exists(parent)
+    # Load state for game status info
+    state = load_state(path, LorcanaState)
 
-        # Apply this action
-        apply_action_at_path(p)
-        print(f"[rules-engine] Applied action: {p.name}", file=sys.stderr)
-
-    ensure_state_exists(path)
-
-    # Load and show available actions
-    state = LorcanaState(path)
-    state.load()
-    actions = show_actions(state.graph)
+    # Read available actions from actions.txt
+    actions = read_actions_file(path)
 
     print(f"[rules-engine] play: {path}", file=sys.stderr)
 
     # Show game state summary
-    from lib.core.graph import get_node_attr
 
     # Get current turn
     turn_edges = edges_by_label(state.graph, "CURRENT_TURN")

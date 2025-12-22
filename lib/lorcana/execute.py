@@ -7,6 +7,7 @@ Routes to specific mechanic implementations.
 from pathlib import Path
 import sys
 from lib.core.graph import can_edges
+from lib.core.persistence import load_state, save_state
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.compute import compute_all
 from lib.lorcana.mechanics.end import execute_pass
@@ -33,13 +34,29 @@ def execute_action(state: LorcanaState, action_type: str, from_node: str, to_nod
 
 
 def apply_action_at_path(path: Path) -> None:
-    """Apply the action represented by this directory."""
+    """
+    Apply the action represented by this directory.
+
+    Recursively ensures all parent states exist before applying this action.
+    """
+    from lib.core.navigation import format_actions
+
+    path = Path(path)
+
+    # If state already exists, nothing to do
+    if (path / "game.dot").exists():
+        return
+
+    # Recursively ensure parent exists
     parent_path = path.parent
+    if parent_path != path and not (parent_path / "game.dot").exists():
+        apply_action_at_path(parent_path)
+
+    # Now apply this action
     action_id = path.name
 
     # Load parent state
-    parent = LorcanaState(parent_path)
-    parent.load()
+    parent = load_state(parent_path, LorcanaState)
 
     # Find the action edge that matches this ID
     action_found = False
@@ -53,9 +70,5 @@ def apply_action_at_path(path: Path) -> None:
     if not action_found:
         raise ValueError(f"Action {action_id} not found in parent state")
 
-    # Create new state at action path with mutated graph
-    new_state = LorcanaState(path)
-    new_state.graph = parent.graph
-    new_state.deck1_ids = parent.deck1_ids
-    new_state.deck2_ids = parent.deck2_ids
-    new_state.save()
+    # Save new state at action path
+    save_state(parent, path, format_actions_fn=format_actions)

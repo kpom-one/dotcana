@@ -7,12 +7,12 @@ import networkx as nx
 from lib.core.graph import edges_by_label, get_node_attr
 
 
-def compute_can_pass(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
+def compute_can_pass(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str]]:
     """Return CAN_PASS edge for current player."""
     edges = edges_by_label(G, "CURRENT_TURN")
     if edges:
         game, player, _ = edges[0]  # GAME -> Player
-        return [(player, game, "CAN_PASS")]
+        return [(player, game, "CAN_PASS", "end")]
     return []
 
 

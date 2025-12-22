@@ -8,7 +8,7 @@ from lib.core.graph import edges_by_label, get_node_attr
 from lib.lorcana.cards import get_card_db
 
 
-def compute_can_play(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
+def compute_can_play(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str]]:
     """Return CAN_PLAY edges for playable cards in current player's hand."""
     result = []
 
@@ -39,7 +39,7 @@ def compute_can_play(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
             cost = card_data.get('cost', 0)
             if ink_available >= cost:
                 destination = discard_zone if card_data.get('type', None) == "Action" else play_zone
-                result.append((card_node, destination, "CAN_PLAY"))
+                result.append((card_node, destination, "CAN_PLAY", f"play:{card_node}"))
 
     return result
 

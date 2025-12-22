@@ -2,9 +2,13 @@
 Card database singleton - loaded once, reused everywhere.
 """
 import json
-from lib.lorcana.deck import normalize_card_name
 
 _CARD_DB = None
+
+
+def normalize_card_name(name: str) -> str:
+    """Convert 'Tinker Bell - Giant Fairy' to 'tinker_bell_giant_fairy'."""
+    return name.lower().replace(' - ', '_').replace(' ', '_').replace('-', '_')
 
 
 def get_card_db() -> dict:

@@ -8,7 +8,7 @@ from lib.core.graph import edges_by_label, get_node_attr
 from lib.lorcana.cards import get_card_db
 
 
-def compute_can_ink(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
+def compute_can_ink(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str]]:
     """Return CAN_INK edges for inkable cards in current player's hand."""
     result = []
 
@@ -37,7 +37,7 @@ def compute_can_ink(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
         card_data = card_db.get(card_name)
 
         if card_data and card_data.get('inkwell'):
-            result.append((card_node, inkwell_zone, "CAN_INK"))
+            result.append((card_node, inkwell_zone, "CAN_INK", f"ink:{card_node}"))
 
     return result
 

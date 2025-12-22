@@ -22,18 +22,6 @@ import networkx as nx
 from pathlib import Path
 
 
-# ========== I/O Functions ==========
-
-# File naming conventions
-GAME_FILE = "game.dot"
-DECK1_SOURCE = "deck1.txt"
-DECK2_SOURCE = "deck2.txt"
-
-# Internal file naming (not exported)
-_DECK1_FILE = "deck1.dek"
-_DECK2_FILE = "deck2.dek"
-
-
 def load_dot(path: str | Path) -> nx.MultiDiGraph:
     """Load a DOT file into a networkx MultiDiGraph."""
     G = nx.drawing.nx_pydot.read_dot(str(path))
@@ -93,41 +81,3 @@ def can_edges(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str, str]]:
     return result
 
 
-def load_deck(base_path: str | Path, player: int) -> list[str]:
-    """
-    Load deck card IDs for a player.
-
-    Args:
-        base_path: Directory containing deck files
-        player: Player number (1 or 2)
-
-    Returns:
-        List of card IDs, or empty list if file doesn't exist
-    """
-    deck_file = _DECK1_FILE if player == 1 else _DECK2_FILE
-    path = Path(base_path) / deck_file
-
-    if not path.exists():
-        return []
-
-    with open(path) as f:
-        return [line.strip() for line in f if line.strip()]
-
-
-def save_deck(deck_ids: list[str], base_path: str | Path, player: int) -> None:
-    """
-    Save deck card IDs for a player.
-
-    Args:
-        deck_ids: List of card IDs to save
-        base_path: Directory to save deck file in
-        player: Player number (1 or 2)
-    """
-    # TODO: Premature optimization opportunity: Symlink if it's the same decklist as before
-    deck_file = _DECK1_FILE if player == 1 else _DECK2_FILE
-    path = Path(base_path) / deck_file
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(path, 'w') as f:
-        for card_id in deck_ids:
-            f.write(f"{card_id}\n")

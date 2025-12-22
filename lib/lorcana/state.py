@@ -1,63 +1,32 @@
 """
-LorcanaState - stateful game state with Lorcana-specific operations.
+LorcanaState - pure game state with Lorcana-specific operations.
 
-Supports both usage patterns:
-1. Stateless: load() → operate → save()
-2. Stateful: load() once → operate many times → save() when needed
+No filesystem knowledge. Just graph + game logic.
+Persistence handled separately in lib/core/persistence.py
 """
 import networkx as nx
-from pathlib import Path
-
-from lib.core.graph import load_dot, save_dot, load_deck, save_deck, GAME_FILE
-from lib.core.navigation import write_path_file, write_actions_file
 from lib.lorcana.cards import get_card_db
-from lib.lorcana.compute import compute_all
 
 
 class LorcanaState:
     """
-    Lorcana game state - wraps graph + decks with game-specific operations.
+    Pure Lorcana game state - graph + decks + game operations.
 
-    This is where ALL Lorcana game logic lives. Core infrastructure (graph.py)
-    stays game-agnostic.
+    This is where ALL Lorcana game logic lives. Persistence is separate.
     """
 
-    def __init__(self, path: Path | str):
+    def __init__(self, graph: nx.MultiDiGraph, deck1_ids: list[str], deck2_ids: list[str]):
         """
-        Create state for a game directory.
+        Create state from components.
 
         Args:
-            path: Path to game state directory (e.g., "output/b013/seed/a0")
+            graph: NetworkX MultiDiGraph representing game state
+            deck1_ids: List of card IDs remaining in P1's deck
+            deck2_ids: List of card IDs remaining in P2's deck
         """
-        self.path = Path(path)
-
-        # In-memory state (lazy loaded)
-        self.graph = None
-        self.deck1_ids = None
-        self.deck2_ids = None
-
-    def load(self):
-        """Load graph and decks from filesystem."""
-        game_file = self.path / GAME_FILE
-        if not game_file.exists():
-            raise FileNotFoundError(f"No {GAME_FILE} at {self.path}")
-
-        self.graph = load_dot(game_file)
-        self.deck1_ids = load_deck(self.path, player=1)
-        self.deck2_ids = load_deck(self.path, player=2)
-
-    def save(self):
-        """Save graph, decks, and navigation files to filesystem."""
-        from lib.lorcana.setup import show_actions
-
-        save_dot(self.graph, self.path / GAME_FILE)
-        save_deck(self.deck1_ids, self.path, player=1)
-        save_deck(self.deck2_ids, self.path, player=2)
-
-        # Write navigation files
-        write_path_file(self.path)
-        actions = show_actions(self.graph)
-        write_actions_file(self.path, actions)
+        self.graph = graph
+        self.deck1_ids = deck1_ids
+        self.deck2_ids = deck2_ids
 
     # ========== Game Operations ==========
 

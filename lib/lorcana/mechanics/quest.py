@@ -8,7 +8,7 @@ from lib.core.graph import edges_by_label, get_node_attr
 from lib.lorcana.cards import get_card_db
 
 
-def compute_can_quest(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
+def compute_can_quest(G: nx.MultiDiGraph) -> list[tuple[str, str, str, str]]:
     """Return CAN_QUEST edges for characters that can quest."""
     result = []
 
@@ -52,7 +52,7 @@ def compute_can_quest(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
         if entered_play == current_turn:
             continue
 
-        result.append((card_node, player, "CAN_QUEST"))
+        result.append((card_node, player, "CAN_QUEST", f"quest:{card_node}"))
 
     return result
 

@@ -14,7 +14,7 @@ import subprocess
 
 from flask import Flask, render_template
 from lib.core.graph import load_dot, get_node_attr, edges_by_label
-from lib.lorcana.setup import show_actions
+from lib.core.navigation import read_actions_file
 
 app = Flask(__name__)
 
@@ -48,7 +48,7 @@ def browse(subpath=''):
     if game_file.exists():
         G = load_dot(game_file)
         state_view = visualize_game_graph(G)
-        actions = show_actions(G)
+        actions = read_actions_file(current_path)
         action_descriptions = {a['id']: a['description'] for a in actions}
 
     # Breadcrumb path for navigation
