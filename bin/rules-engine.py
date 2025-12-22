@@ -3,8 +3,8 @@
 Dotcana Rules Engine
 
 Commands:
-    init <matchdir>      - Create base game.dot from template + decks
-    show <game.dot>      - Show available actions
+    init <deck1.txt> <deck2.txt> - Create matchup from decklists
+    show <game.dot>              - Show available actions
 """
 import sys
 from pathlib import Path
@@ -16,14 +16,14 @@ from lib.graph import load_dot, save_dot, can_edges
 from lib.engine import init_game, show_actions
 
 
-def cmd_init(matchdir: str) -> None:
-    """Create base game.dot from template + decks."""
-    matchdir = Path(matchdir)
-    output = matchdir / "game.dot"
-
-    G = init_game(matchdir)
+def cmd_init(deck1: str, deck2: str) -> None:
+    """Create matchup from decklist files."""
+    G, matchup_hash = init_game(deck1, deck2)
+    output = Path("output") / matchup_hash / "game.dot"
     save_dot(G, output)
 
+    # Print hash to stdout for justfile to capture
+    print(matchup_hash)
     print(f"[rules-engine] init: {output}", file=sys.stderr)
 
 
@@ -51,10 +51,10 @@ def main():
     cmd = sys.argv[1]
 
     if cmd == "init":
-        if len(sys.argv) != 3:
-            print("Usage: rules-engine.py init <matchdir>")
+        if len(sys.argv) != 4:
+            print("Usage: rules-engine.py init <deck1.txt> <deck2.txt>")
             sys.exit(1)
-        cmd_init(sys.argv[2])
+        cmd_init(sys.argv[2], sys.argv[3])
 
     elif cmd == "show":
         if len(sys.argv) != 3:

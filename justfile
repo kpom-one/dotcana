@@ -27,23 +27,13 @@ match deck1 deck2:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Generate 4-char hash from deck filenames
-    hash=$(echo "{{deck1}}{{deck2}}" | md5sum | cut -c1-4)
-    outdir="output/${hash}"
+    # rules-engine generates hash from deck contents and returns it
+    hash=$({{python}} bin/rules-engine.py init "{{deck1}}" "{{deck2}}")
 
-    echo "Creating matchup: ${hash}"
-    mkdir -p "${outdir}"
-
-    # Convert decks to dot
-    {{python}} bin/txt_to_dot.py 1 "{{deck1}}" > "${outdir}/deck1.dot"
-    {{python}} bin/txt_to_dot.py 2 "{{deck2}}" > "${outdir}/deck2.dot"
-
-    # Create base game.dot (template + decks, unshuffled)
-    {{python}} bin/rules-engine.py init "${outdir}"
-
-    echo "  ${outdir}/deck1.dot"
-    echo "  ${outdir}/deck2.dot"
-    echo "  ${outdir}/game.dot"
+    echo "Created matchup: ${hash}"
+    echo "  output/${hash}/deck1.txt"
+    echo "  output/${hash}/deck2.txt"
+    echo "  output/${hash}/game.dot"
     echo "Done. Use: just show ${hash}"
 
 # Show game state and available actions
