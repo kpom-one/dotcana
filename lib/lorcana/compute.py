@@ -7,6 +7,7 @@ import networkx as nx
 from lib.lorcana.mechanics.end import compute_can_pass
 from lib.lorcana.mechanics.ink import compute_can_ink
 from lib.lorcana.mechanics.play import compute_can_play
+from lib.lorcana.mechanics.quest import compute_can_quest
 
 
 def clear_can_edges(G: nx.MultiDiGraph) -> None:
@@ -34,7 +35,8 @@ def compute_all(G: nx.MultiDiGraph) -> None:
     edges_to_add.extend(compute_can_pass(G))
     edges_to_add.extend(compute_can_ink(G))
     edges_to_add.extend(compute_can_play(G))
-    # TODO: Add other mechanics (quest, challenge, activate)
+    edges_to_add.extend(compute_can_quest(G))
+    # TODO: Add other mechanics (challenge, activate)
 
     # Add all edges
     for src, dst, action_type in edges_to_add:

@@ -13,6 +13,7 @@ from lib.lorcana.compute import compute_all
 from lib.lorcana.mechanics.end import execute_pass
 from lib.lorcana.mechanics.ink import execute_ink
 from lib.lorcana.mechanics.play import execute_play
+from lib.lorcana.mechanics.quest import execute_quest
 
 
 def execute_action(state: LorcanaState, action_type: str, from_node: str, to_node: str) -> None:
@@ -23,6 +24,8 @@ def execute_action(state: LorcanaState, action_type: str, from_node: str, to_nod
         execute_ink(state, from_node, to_node)
     elif action_type == "CAN_PLAY":
         execute_play(state, from_node, to_node)
+    elif action_type == "CAN_QUEST":
+        execute_quest(state, from_node, to_node)
     else:
         print(f"TODO: Implement {action_type}", file=sys.stderr)
 

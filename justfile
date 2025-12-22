@@ -65,6 +65,12 @@ show hash seed="":
 play path:
     {{python}} bin/rules-engine.py play "{{path}}"
 
+# Find all explored leaf nodes (states with no further exploration)
+# Usage: just open-games output/b013
+open-games path:
+    #!/usr/bin/env bash
+    find {{path}} -type f -name "game.dot" -exec sh -c 'dir=$(dirname "{}"); if [ -z "$(find "$dir" -mindepth 2 -name "game.dot")" ]; then echo "$dir"; fi' \;
+
 # Start web viewer
 # Usage: just serve
 serve:
@@ -78,10 +84,9 @@ test:
     set -euo pipefail
 
     just clear
-    just match data/decks/bs01.txt data/decks/rp01.txt >/dev/null
-    just shuffle b013 "b123456.0123456.ab" >/dev/null
-    just play output/b013/b123456.0123456.ab/i49 >/dev/null
-    just play output/b013/b123456.0123456.ab/i49/e35 >/dev/null
+    just match data/decks/bs01.txt data/decks/rp01.txt 
+    just shuffle b013 "b123456.0123456.ab" 
+    just play output/b013/b123456.0123456.ab/i49/p4b/e35/i93/p24/e43/q79 
 
     echo "Test game ready:"
-    echo "  just play output/b013/b123456.0123456.ab/i49/e35"
+    echo "  just play output/b013/b123456.0123456.ab/i49/p4b/e35/i93/p24/e43/q79"

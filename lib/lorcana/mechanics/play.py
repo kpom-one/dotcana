@@ -45,8 +45,8 @@ def compute_can_play(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
 
 
 def execute_play(state, from_node: str, to_node: str) -> None:
-    """Execute play action: move card to play, spend ink, apply summoning sickness."""
-    # Move card from hand to play
+    """Execute play action: move card to play, spend ink, track entered_play turn."""
+    # Move card from hand to play/discard
     state.move_card(from_node, to_node)
 
     # Get card data
@@ -62,5 +62,12 @@ def execute_play(state, from_node: str, to_node: str) -> None:
             game, player, _ = edges[0]
             ink_available = int(get_node_attr(state.graph, player, 'ink_available', 0))
             state.graph.nodes[player]['ink_available'] = str(ink_available - cost)
+
+            # If card entered play zone (not discard), track the turn
+            zone_kind = get_node_attr(state.graph, to_node, 'kind', '')
+            if zone_kind == 'play':
+                current_turn = get_node_attr(state.graph, 'game', 'turn', '0')
+                state.graph.nodes[from_node]['entered_play'] = current_turn
+                state.graph.nodes[from_node]['tapped'] = '0'
 
 

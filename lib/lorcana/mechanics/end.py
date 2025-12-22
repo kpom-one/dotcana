@@ -17,7 +17,7 @@ def compute_can_pass(G: nx.MultiDiGraph) -> list[tuple[str, str, str]]:
 
 
 def execute_pass(state, from_node: str, to_node: str) -> None:
-    """Execute pass action: switch players, increment turn, reset ink."""
+    """Execute pass action: switch players, increment turn, reset ink, untap characters."""
     # Switch current player
     edges = edges_by_label(state.graph, "CURRENT_TURN")
     if edges:
@@ -37,6 +37,13 @@ def execute_pass(state, from_node: str, to_node: str) -> None:
         # Refresh ink_available to match ink_total
         ink_total = int(get_node_attr(state.graph, other_player, 'ink_total', 0))
         state.graph.nodes[other_player]['ink_available'] = str(ink_total)
+
+        # Untap all characters in the new player's play zone
+        play_zone = f"z.{other_player}.play"
+        cards_in_play = [u for u, v, _ in edges_by_label(state.graph, "IN") if v == play_zone]
+        for card_node in cards_in_play:
+            if 'tapped' in state.graph.nodes[card_node]:
+                state.graph.nodes[card_node]['tapped'] = '0'
 
     # Increment turn counter
     turn = int(get_node_attr(state.graph, 'game', 'turn', 0))
