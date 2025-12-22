@@ -59,3 +59,8 @@ show hash seed="":
     else
         {{python}} bin/rules-engine.py show "output/{{hash}}/{{seed}}/game.dot"
     fi
+
+# Navigate to state and apply action if needed
+# Usage: just play output/b013/0123456.0123456.ab/i49/
+play path:
+    {{python}} bin/rules-engine.py play "{{path}}"
