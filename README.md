@@ -16,8 +16,11 @@ Installs: `networkx`, `pydot`
 # Create a matchup from two decks
 just match data/decks/bs01.txt data/decks/rp01.txt
 
+# Shuffle and draw starting hands (7 cards each)
+just shuffle b013 "0123456.0123456.ab"
+
 # Show game state and available actions
-just show fe69
+just show b013 0123456.0123456.ab
 
 # Clear all output
 just clear
@@ -35,9 +38,15 @@ See `SCHEMA.md` for details.
 ## What Works
 
 - ✓ Game initialization (template + decks → game.dot)
+- ✓ Deterministic shuffle with hand-spec seeds
+- ✓ Lazy card node creation (cards only in graph when drawn)
 - ✓ Action computation (CAN_PASS only)
 - ✓ State visualization via DOT
 
 ## What Doesn't
 
-Everything else. Next: implement shuffle as first action.
+- Action application (play, ink, quest, challenge, etc.)
+- Turn advancement
+- Lore tracking
+- Combat resolution
+- Effect chains

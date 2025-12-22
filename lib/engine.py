@@ -10,6 +10,7 @@ from pathlib import Path
 
 from lib.graph import load_dot, save_dot, can_edges
 from lib.compute import compute_all
+from lib.seed import parse_seed, create_deck_file, normalize_card_name
 
 
 def init_game(deck1_txt: str | Path, deck2_txt: str | Path) -> tuple[nx.MultiDiGraph, str]:
@@ -41,9 +42,9 @@ def init_game(deck1_txt: str | Path, deck2_txt: str | Path) -> tuple[nx.MultiDiG
     shutil.copy(deck1_txt, matchdir / "deck1.txt")
     shutil.copy(deck2_txt, matchdir / "deck2.txt")
 
-    # Add cards from decklists
-    _add_deck_to_game(G, deck1_txt, card_db, deck_num=1, deck_zone="Z_P1_DECK")
-    _add_deck_to_game(G, deck2_txt, card_db, deck_num=2, deck_zone="Z_P2_DECK")
+    # Store card database in graph for later lookups
+    # (cards are not created as nodes until drawn)
+    G.graph['card_db'] = card_db
 
     # Compute initial legal actions
     compute_all(G)
@@ -66,41 +67,106 @@ def _load_card_database() -> dict:
     return {card["fullName"]: card for card in data["cards"]}
 
 
-def _add_deck_to_game(G: nx.MultiDiGraph, deck_txt: Path, card_db: dict, deck_num: int, deck_zone: str) -> None:
-    """Parse decklist.txt and add cards to game graph."""
-    with open(deck_txt, "r") as f:
-        card_index = 1
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
+def _create_card_node(G: nx.MultiDiGraph, card_id: str, player: int) -> str:
+    """
+    Create a card node from a card ID.
 
-            # Parse: "COUNT CARD_NAME"
-            match = re.match(r"(\d+)\s+(.+)", line)
-            if not match:
-                continue
+    Args:
+        card_id: Normalized ID like "tinker_bell_giant_fairy.a"
+        player: 1 or 2
 
-            count = int(match.group(1))
-            name = match.group(2).strip()
+    Returns:
+        Node ID: "p1.tinker_bell_giant_fairy.a"
+    """
+    # Extract card name from ID (before the .suffix)
+    base_name = card_id.rsplit('.', 1)[0]
 
-            # Lookup card
-            card = card_db.get(name)
-            if not card:
-                raise ValueError(f"Card '{name}' not found in database")
+    # Look up original card name in database
+    card_db = G.graph['card_db']
 
-            # Add card instances
-            for _ in range(count):
-                node_id = f"D{deck_num}_{card_index:02d}"
-                G.add_node(
-                    node_id,
-                    type="Card",
-                    card_id=card["id"],
-                    exerted="0",
-                    damage="0",
-                    label=name
-                )
-                G.add_edge(node_id, deck_zone, label="IN", position=str(card_index - 1))
-                card_index += 1
+    # Find matching card (reverse lookup by normalized name)
+    original_name = None
+    for name in card_db.keys():
+        if normalize_card_name(name) == base_name:
+            original_name = name
+            break
+
+    if not original_name:
+        raise ValueError(f"Card not found for ID: {card_id}")
+
+    card_data = card_db[original_name]
+    node_id = f"p{player}.{card_id}"
+
+    G.add_node(
+        node_id,
+        type="Card",
+        card_id=card_data["id"],
+        exerted="0",
+        damage="0",
+        label=original_name
+    )
+
+    return node_id
+
+
+def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
+    """
+    Shuffle decks and draw starting hands (7 cards each).
+
+    Creates output/<matchdir>/<seed>/ with:
+    - deck1.dek (53 cards remaining)
+    - deck2.dek (53 cards remaining)
+    - game.dot (14 cards in hands)
+
+    Args:
+        matchdir: Matchup directory (e.g., "output/b013")
+        seed: Hand-spec seed (xxxxxxx.xxxxxxx.xx)
+
+    Returns:
+        Seed (for display)
+    """
+    matchdir = Path(matchdir)
+    hand_spec = parse_seed(seed)
+    if not hand_spec:
+        raise ValueError(f"Invalid seed format: {seed}")
+
+    seed_dir = matchdir / seed
+    seed_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load base game
+    G = load_dot(matchdir / "game.dot")
+
+    # Load card database (not persisted in DOT format)
+    G.graph['card_db'] = _load_card_database()
+
+    # Create shuffled decks and draw hands
+    for player_num, hand_indices in [('1', hand_spec['p1_hand']), ('2', hand_spec['p2_hand'])]:
+        deck_txt = matchdir / f"deck{player_num}.txt"
+        deck_dek = seed_dir / f"deck{player_num}.dek"
+        hand_zone = f"z.p{player_num}.hand"
+
+        # Build shuffled deck (hand + remainder)
+        shuffled = create_deck_file(deck_txt, hand_indices, hand_spec['shuffle_seed'])
+
+        # First 7 cards: create nodes and add to hand
+        for card_id in shuffled[:7]:
+            node_id = _create_card_node(G, card_id, int(player_num))
+            G.add_edge(node_id, hand_zone, label="IN")
+
+        # Remaining 53 cards written to .dek (not in graph yet)
+        with open(deck_dek, 'w') as f:
+            for card_id in shuffled[7:]:
+                f.write(f"{card_id}\n")
+
+    # Recompute legal actions
+    compute_all(G)
+
+    # Save game state
+    save_dot(G, seed_dir / "game.dot")
+
+    return seed
+
+
 
 
 def show_actions(G: nx.MultiDiGraph) -> list[dict]:

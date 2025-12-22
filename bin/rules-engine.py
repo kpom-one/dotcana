@@ -3,8 +3,9 @@
 Dotcana Rules Engine
 
 Commands:
-    init <deck1.txt> <deck2.txt> - Create matchup from decklists
-    show <game.dot>              - Show available actions
+    init <deck1.txt> <deck2.txt>   - Create matchup from decklists
+    shuffle <matchdir> <seed>      - Shuffle and deal starting hands
+    show <game.dot>                - Show available actions
 """
 import sys
 from pathlib import Path
@@ -13,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from lib.graph import load_dot, save_dot, can_edges
-from lib.engine import init_game, show_actions
+from lib.engine import init_game, shuffle_and_draw, show_actions
 
 
 def cmd_init(deck1: str, deck2: str) -> None:
@@ -25,6 +26,15 @@ def cmd_init(deck1: str, deck2: str) -> None:
     # Print hash to stdout for justfile to capture
     print(matchup_hash)
     print(f"[rules-engine] init: {output}", file=sys.stderr)
+
+
+def cmd_shuffle(matchdir: str, seed: str) -> None:
+    """Shuffle decks and draw starting hands."""
+    seed = shuffle_and_draw(matchdir, seed)
+    output = Path(matchdir) / seed / "game.dot"
+
+    print(seed)
+    print(f"[rules-engine] shuffle: seed={seed} -> {output}", file=sys.stderr)
 
 
 def cmd_show(game_dot: str) -> None:
@@ -55,6 +65,12 @@ def main():
             print("Usage: rules-engine.py init <deck1.txt> <deck2.txt>")
             sys.exit(1)
         cmd_init(sys.argv[2], sys.argv[3])
+
+    elif cmd == "shuffle":
+        if len(sys.argv) != 4:
+            print("Usage: rules-engine.py shuffle <matchdir> <seed>")
+            sys.exit(1)
+        cmd_shuffle(sys.argv[2], sys.argv[3])
 
     elif cmd == "show":
         if len(sys.argv) != 3:

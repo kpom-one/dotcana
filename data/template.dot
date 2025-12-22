@@ -1,38 +1,38 @@
 digraph lorcana {
 
     // ---- Game State ----
-    GAME [type="Game", turn="0"];
+    game [type="Game", turn="0"];
 
     // ---- Players ----
-    P1 [type="Player", lore="0", ink_drops="1"];
-    P2 [type="Player", lore="0", ink_drops="1"];
+    p1 [type="Player", lore="0", ink_drops="1"];
+    p2 [type="Player", lore="0", ink_drops="1"];
 
-    GAME -> P1 [label="CURRENT_TURN"];
+    game -> p1 [label="CURRENT_TURN"];
 
     // ---- Zones ----
-    Z_P1_HAND    [type="Zone", kind="hand"];
-    Z_P1_DECK    [type="Zone", kind="deck"];
-    Z_P1_INK     [type="Zone", kind="inkwell"];
-    Z_P1_PLAY    [type="Zone", kind="play"];
-    Z_P1_DISCARD [type="Zone", kind="discard"];
+    "z.p1.hand"    [type="Zone", kind="hand"];
+    "z.p1.deck"    [type="Zone", kind="deck"];
+    "z.p1.ink"     [type="Zone", kind="inkwell"];
+    "z.p1.play"    [type="Zone", kind="play"];
+    "z.p1.discard" [type="Zone", kind="discard"];
 
-    Z_P2_HAND    [type="Zone", kind="hand"];
-    Z_P2_DECK    [type="Zone", kind="deck"];
-    Z_P2_INK     [type="Zone", kind="inkwell"];
-    Z_P2_PLAY    [type="Zone", kind="play"];
-    Z_P2_DISCARD [type="Zone", kind="discard"];
+    "z.p2.hand"    [type="Zone", kind="hand"];
+    "z.p2.deck"    [type="Zone", kind="deck"];
+    "z.p2.ink"     [type="Zone", kind="inkwell"];
+    "z.p2.play"    [type="Zone", kind="play"];
+    "z.p2.discard" [type="Zone", kind="discard"];
 
     // ---- Zone Ownership ----
-    Z_P1_HAND    -> P1 [label="OWNS"];
-    Z_P1_DECK    -> P1 [label="OWNS"];
-    Z_P1_INK     -> P1 [label="OWNS"];
-    Z_P1_PLAY    -> P1 [label="OWNS"];
-    Z_P1_DISCARD -> P1 [label="OWNS"];
+    "z.p1.hand"    -> p1 [label="OWNS"];
+    "z.p1.deck"    -> p1 [label="OWNS"];
+    "z.p1.ink"     -> p1 [label="OWNS"];
+    "z.p1.play"    -> p1 [label="OWNS"];
+    "z.p1.discard" -> p1 [label="OWNS"];
 
-    Z_P2_HAND    -> P2 [label="OWNS"];
-    Z_P2_DECK    -> P2 [label="OWNS"];
-    Z_P2_INK     -> P2 [label="OWNS"];
-    Z_P2_PLAY    -> P2 [label="OWNS"];
-    Z_P2_DISCARD -> P2 [label="OWNS"];
+    "z.p2.hand"    -> p2 [label="OWNS"];
+    "z.p2.deck"    -> p2 [label="OWNS"];
+    "z.p2.ink"     -> p2 [label="OWNS"];
+    "z.p2.play"    -> p2 [label="OWNS"];
+    "z.p2.discard" -> p2 [label="OWNS"];
 
 }

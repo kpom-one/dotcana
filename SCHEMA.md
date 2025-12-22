@@ -34,14 +34,18 @@ dotcana/
 │   └── decks/
 │       └── *.txt                    # Deck lists (count + card name per line)
 ├── output/
-│   └── <hash>/                      # Matchup directory (hash of deck files)
-│       ├── deck1.dot                # P1's card instances (full digraph)
-│       ├── deck2.dot                # P2's card instances (full digraph)
-│       ├── game.dot                 # Initial state (unshuffled)
-│       └── <action>/
-│           └── game.dot             # State after action
-│               └── <action>/
-│                   └── game.dot     # And so on...
+│   └── <hash>/                      # Matchup directory (hash of deck contents)
+│       ├── deck1.txt                # P1's decklist (copied from data/decks/)
+│       ├── deck2.txt                # P2's decklist (copied from data/decks/)
+│       ├── game.dot                 # Initial state (before shuffle)
+│       └── <seed>/                  # Hand-spec seed (xxxxxxx.xxxxxxx.xx)
+│           ├── deck1.dek            # P1's shuffled deck (53 cards, flat file)
+│           ├── deck2.dek            # P2's shuffled deck (53 cards, flat file)
+│           ├── game.dot             # State after shuffle (14 cards in hands)
+│           └── <action>/
+│               └── game.dot         # State after action
+│                   └── <action>/
+│                       └── game.dot # And so on...
 ```
 
 ### Path as Game Log
@@ -143,53 +147,55 @@ Universal game structure. Same for every game.
 ```dot
 digraph lorcana {
     // Game node
-    GAME [type="Game", turn="0"];
+    game [type="Game", turn="0"];
 
     // Players
-    P1 [type="Player", lore="0", ink_drops="1"];
-    P2 [type="Player", lore="0", ink_drops="1"];
+    p1 [type="Player", lore="0", ink_drops="1"];
+    p2 [type="Player", lore="0", ink_drops="1"];
 
-    GAME -[CURRENT_TURN]-> P1;
+    game -[CURRENT_TURN]-> p1;
 
     // Zones
-    Z_P1_HAND    [type="Zone", kind="hand"];
-    Z_P1_DECK    [type="Zone", kind="deck"];
-    Z_P1_PLAY    [type="Zone", kind="play"];
-    Z_P1_INK     [type="Zone", kind="inkwell"];
-    Z_P1_DISCARD [type="Zone", kind="discard"];
+    "z.p1.hand"    [type="Zone", kind="hand"];
+    "z.p1.deck"    [type="Zone", kind="deck"];
+    "z.p1.play"    [type="Zone", kind="play"];
+    "z.p1.ink"     [type="Zone", kind="inkwell"];
+    "z.p1.discard" [type="Zone", kind="discard"];
 
-    Z_P2_HAND    [type="Zone", kind="hand"];
-    Z_P2_DECK    [type="Zone", kind="deck"];
-    Z_P2_PLAY    [type="Zone", kind="play"];
-    Z_P2_INK     [type="Zone", kind="inkwell"];
-    Z_P2_DISCARD [type="Zone", kind="discard"];
+    "z.p2.hand"    [type="Zone", kind="hand"];
+    "z.p2.deck"    [type="Zone", kind="deck"];
+    "z.p2.play"    [type="Zone", kind="play"];
+    "z.p2.ink"     [type="Zone", kind="inkwell"];
+    "z.p2.discard" [type="Zone", kind="discard"];
 
     // Ownership
-    Z_P1_HAND    -[OWNS]-> P1;
-    Z_P1_DECK    -[OWNS]-> P1;
-    Z_P1_PLAY    -[OWNS]-> P1;
-    Z_P1_INK     -[OWNS]-> P1;
-    Z_P1_DISCARD -[OWNS]-> P1;
+    "z.p1.hand"    -[OWNS]-> p1;
+    "z.p1.deck"    -[OWNS]-> p1;
+    "z.p1.play"    -[OWNS]-> p1;
+    "z.p1.ink"     -[OWNS]-> p1;
+    "z.p1.discard" -[OWNS]-> p1;
 
-    Z_P2_HAND    -[OWNS]-> P2;
-    Z_P2_DECK    -[OWNS]-> P2;
-    Z_P2_PLAY    -[OWNS]-> P2;
-    Z_P2_INK     -[OWNS]-> P2;
-    Z_P2_DISCARD -[OWNS]-> P2;
+    "z.p2.hand"    -[OWNS]-> p2;
+    "z.p2.deck"    -[OWNS]-> p2;
+    "z.p2.play"    -[OWNS]-> p2;
+    "z.p2.ink"     -[OWNS]-> p2;
+    "z.p2.discard" -[OWNS]-> p2;
 }
 ```
 
-### deck.dot
+### deck.dek
 
-Card instances for one player. Full digraph (merged into game.dot during init).
+Shuffled deck as flat file (card IDs, not graph nodes). Cards only become nodes when drawn.
 
-```dot
-digraph deck1 {
-    D1_01 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
-    D1_02 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
-    // ... 60 total
-}
 ```
+tinker_bell_giant_fairy.a
+tinker_bell_giant_fairy.b
+tipo_growing_son.a
+tipo_growing_son.b
+// ... 53 cards remaining (7 drawn to hand)
+```
+
+Format: `{normalized_card_name}.{a|b|c|d}` (copy suffix for 4-of cards)
 
 ### game.dot
 
@@ -198,27 +204,26 @@ Complete game state. Assembled from template + decks + runtime state.
 ```dot
 digraph lorcana {
     // --- Structure (from template) ---
-    GAME [type="Game", turn="3"];
-    P1 [type="Player", lore="4", ink_drops="1"];
-    P2 [type="Player", lore="2", ink_drops="1"];
+    game [type="Game", turn="3"];
+    p1 [type="Player", lore="4", ink_drops="1"];
+    p2 [type="Player", lore="2", ink_drops="1"];
     // ... zones, OWNS edges ...
 
-    // --- Cards (from deck1.dot + deck2.dot) ---
-    D1_01 [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
-    // ... all 120 cards ...
+    // --- Cards (lazy creation when drawn) ---
+    "p1.tinker_bell_giant_fairy.a" [type="Card", card_id="2188", exerted="0", damage="0", label="Tinker Bell - Giant Fairy"];
+    // ... only cards in zones (not deck) ...
 
     // --- Card locations (runtime) ---
-    D1_01 -[IN]-> Z_P1_HAND;
-    D1_02 -[IN]-> Z_P1_DECK;
-    D1_03 -[IN]-> Z_P1_PLAY;
+    "p1.tinker_bell_giant_fairy.a" -[IN]-> "z.p1.hand";
+    "p1.tipo_growing_son.a" -[IN]-> "z.p1.play";
     // ...
 
     // --- Actions (computed by rules engine) ---
-    D1_01 -[CAN_PLAY]-> Z_P1_PLAY;
-    D1_01 -[CAN_INK]-> Z_P1_INK;
-    D1_03 -[CAN_QUEST]-> GAME;
-    D1_03 -[CAN_CHALLENGE]-> D2_07;
-    P1 -[CAN_PASS]-> GAME;
+    "p1.tinker_bell_giant_fairy.a" -[CAN_PLAY]-> "z.p1.play";
+    "p1.tinker_bell_giant_fairy.a" -[CAN_INK]-> "z.p1.ink";
+    "p1.tipo_growing_son.a" -[CAN_QUEST]-> game;
+    "p1.tipo_growing_son.a" -[CAN_CHALLENGE]-> "p2.elsa_the_fifth_spirit.a";
+    p1 -[CAN_PASS]-> game;
 }
 ```
 
@@ -226,30 +231,42 @@ digraph lorcana {
 
 ## CLI Tools
 
-### start
+### match
 
-Initialize a game from template and decks.
+Initialize a matchup from two deck files.
 
 ```bash
-
 just match data/decks/deck1.txt data/decks/deck2.txt
-# Creates 4-char matchup hash from deck file paths
-# mkdir output/<hash>
-# Runs: data/decks/txt_to_dot.py for each deck
-#   Outputs: output/<hash>/deck1.dot, output/<hash>/deck2.dot
-# Runs: bin/rules-engine.py init <hash>
-#   Merges template + decks -> output/<hash>/game.dot
+# Creates 4-char hash from deck contents (not file paths)
+# Creates output/<hash>/
+# Copies deck1.txt, deck2.txt to matchup directory
+# Loads template.dot and card database
+# Outputs: output/<hash>/game.dot (initial state before shuffle)
+```
 
-just play <hash> <actions>
-# Walks action path, applying each step
+### shuffle
+
+Shuffle decks and draw starting hands using a hand-spec seed.
+
+```bash
+just shuffle <hash> <seed>
+# Example: just shuffle b013 "0123456.0123456.ab"
+# Seed format: xxxxxxx.xxxxxxx.xx
+#   - First 7 chars: P1's hand (indices 0-9a-z into deck1.txt)
+#   - Second 7 chars: P2's hand (indices 0-9a-z into deck2.txt)
+#   - Last 2 chars: RNG suffix for shuffling remainder
+# Creates: output/<hash>/<seed>/deck1.dek, deck2.dek, game.dot
+# Cards in hands are created as nodes; remaining 53 in .dek files
+```
+
+### show
+
+Display game state and available actions.
+
+```bash
+just show <hash> [<seed>]
 # Examples:
-#   just play fe69              # Show current state
-#   just play fe69 a0           # Apply action a0
-#   just play fe69 a0/b2/c1     # Apply sequence: a0, then b2, then c1
-#
-# For each action:
-#   - Skip if output/<hash>/<path>/game.dot exists
-#   - Otherwise: bin/rules-engine.py <parent>/<action_id>
-#     Reads parent/game.dot, applies action, writes <action_id>/game.dot
-
+#   just show b013                     # Before shuffle
+#   just show b013 0123456.0123456.ab  # After shuffle
+# Lists all CAN_* edges (legal actions)
 ```
