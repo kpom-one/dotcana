@@ -4,8 +4,8 @@ digraph lorcana {
     game [type="Game", turn="0"];
 
     // ---- Players ----
-    p1 [type="Player", lore="0", ink_drops="1"];
-    p2 [type="Player", lore="0", ink_drops="1"];
+    p1 [type="Player", lore="0", ink_drops="1", ink_total="0", ink_available="0"];
+    p2 [type="Player", lore="0", ink_drops="1", ink_total="0", ink_available="0"];
 
     game -> p1 [label="CURRENT_TURN"];
 

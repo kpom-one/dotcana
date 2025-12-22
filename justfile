@@ -61,7 +61,7 @@ show hash seed="":
     fi
 
 # Navigate to state and apply action if needed
-# Usage: just play output/b013/0123456.0123456.ab/i49/
+# Usage: just play output/b013/b123456.0123456.ab/i49/
 play path:
     {{python}} bin/rules-engine.py play "{{path}}"
 
@@ -79,9 +79,9 @@ test:
 
     just clear
     just match data/decks/bs01.txt data/decks/rp01.txt >/dev/null
-    just shuffle b013 "0123456.0123456.ab" >/dev/null
-    just play output/b013/0123456.0123456.ab/i49 >/dev/null
-    just play output/b013/0123456.0123456.ab/i49/e35 >/dev/null
+    just shuffle b013 "b123456.0123456.ab" >/dev/null
+    just play output/b013/b123456.0123456.ab/i49 >/dev/null
+    just play output/b013/b123456.0123456.ab/i49/e35 >/dev/null
 
     echo "Test game ready:"
-    echo "  just play output/b013/0123456.0123456.ab/i49/e35"
+    echo "  just play output/b013/b123456.0123456.ab/i49/e35"

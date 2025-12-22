@@ -1,9 +1,12 @@
 """
 Compute legal actions (CAN_* edges) from Lorcana game state.
+
+Orchestrates mechanics to compute all legal actions.
 """
 import networkx as nx
-from lib.core.graph import nodes_by_type, get_node_attr, edges_by_label
-from lib.lorcana.cards import get_card_db
+from lib.lorcana.mechanics.end import compute_can_pass
+from lib.lorcana.mechanics.ink import compute_can_ink
+from lib.lorcana.mechanics.play import compute_can_play
 
 
 def clear_can_edges(G: nx.MultiDiGraph) -> None:
@@ -22,82 +25,17 @@ def add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str) -> st
     return key
 
 
-def compute_can_pass(G: nx.MultiDiGraph) -> None:
-    """Add CAN_PASS edge for current player."""
-    edges = edges_by_label(G, "CURRENT_TURN")
-    if edges:
-        game, player, _ = edges[0]  # GAME -> Player
-        add_can_edge(G, player, game, "CAN_PASS")
-
-
-def compute_can_ink(G: nx.MultiDiGraph) -> None:
-    """Add CAN_INK edges for inkable cards in current player's hand."""
-    # Get current player from CURRENT_TURN edge
-    edges = edges_by_label(G, "CURRENT_TURN")
-    if not edges:
-        return
-    game, player, _ = edges[0]  # Game -> Player
-
-    # Check ink_drops > 0
-    ink_drops = int(get_node_attr(G, player, 'ink_drops', 0))
-    if ink_drops <= 0:
-        return
-
-    # Get zones
-    hand_zone = f"z.{player}.hand"
-    inkwell_zone = f"z.{player}.ink"
-
-    # Find cards IN hand
-    cards_in_hand = [u for u, v, _ in edges_by_label(G, "IN") if v == hand_zone]
-
-    # Check each card for inkwell property
-    card_db = get_card_db()
-    for card_node in cards_in_hand:
-        # Extract base name: "p1.tinker_bell_giant_fairy.a" -> "tinker_bell_giant_fairy"
-        base_name = card_node.split('.', 1)[1].rsplit('.', 1)[0]
-
-        # O(1) lookup by normalized name
-        card_data = card_db.get(base_name)
-
-        if card_data and card_data.get('inkwell'):
-            add_can_edge(G, card_node, inkwell_zone, "CAN_INK")
-
-
-def compute_can_play(G: nx.MultiDiGraph) -> None:
-    """Add CAN_PLAY edges for playable cards in current player's hand."""
-    # TODO: Check ink available >= card cost
-    # For now, stub - no play actions
-    pass
-
-
-def compute_can_quest(G: nx.MultiDiGraph) -> None:
-    """Add CAN_QUEST edges for ready characters in play."""
-    # TODO: Check card is Character, not exerted, been in play since turn start
-    # For now, stub - no quest actions
-    pass
-
-
-def compute_can_challenge(G: nx.MultiDiGraph) -> None:
-    """Add CAN_CHALLENGE edges for ready characters vs exerted opponents."""
-    # TODO: Check challenger ready, target exerted
-    # For now, stub - no challenge actions
-    pass
-
-
-def compute_can_activate(G: nx.MultiDiGraph) -> None:
-    """Add CAN_ACTIVATE edges for cards with activated abilities."""
-    # TODO: Check ability requirements met
-    # For now, stub - no activate actions
-    pass
-
-
 def compute_all(G: nx.MultiDiGraph) -> None:
     """Recompute all CAN_* edges from current state."""
     clear_can_edges(G)
 
-    compute_can_pass(G)
-    compute_can_ink(G)
-    compute_can_play(G)
-    compute_can_quest(G)
-    compute_can_challenge(G)
-    compute_can_activate(G)
+    # Collect edges from all mechanics
+    edges_to_add = []
+    edges_to_add.extend(compute_can_pass(G))
+    edges_to_add.extend(compute_can_ink(G))
+    edges_to_add.extend(compute_can_play(G))
+    # TODO: Add other mechanics (quest, challenge, activate)
+
+    # Add all edges
+    for src, dst, action_type in edges_to_add:
+        add_can_edge(G, src, dst, action_type)
