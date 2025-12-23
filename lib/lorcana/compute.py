@@ -8,6 +8,7 @@ from lib.lorcana.mechanics.end import compute_can_pass
 from lib.lorcana.mechanics.ink import compute_can_ink
 from lib.lorcana.mechanics.play import compute_can_play
 from lib.lorcana.mechanics.quest import compute_can_quest
+from lib.lorcana.mechanics.challenge import compute_can_challenge
 
 
 def _clear_can_edges(G: nx.MultiDiGraph) -> None:
@@ -36,11 +37,13 @@ def compute_all(G: nx.MultiDiGraph) -> None:
     edges_to_add.extend(compute_can_ink(G))
     edges_to_add.extend(compute_can_play(G))
     edges_to_add.extend(compute_can_quest(G))
-    # TODO: Add other mechanics (challenge, activate)
+    edges_to_add.extend(compute_can_challenge(G))
+    # TODO: Add other mechanics (activate abilities)
 
     # Sort deterministically and assign sequential action IDs
-    sorted_edges = sorted(edges_to_add, key=lambda e: (e[2], e[0], e[1]))  # (action_type, from, to)
+    # ActionEdge is a NamedTuple so we can use tuple indexing or named attributes
+    sorted_edges = sorted(edges_to_add, key=lambda e: (e.action_type, e.src, e.dst))
 
     # Add edges with sequential action_ids
-    for idx, (src, dst, action_type, description) in enumerate(sorted_edges):
-        _add_can_edge(G, src, dst, action_type, action_id=str(idx), description=description)
+    for idx, edge in enumerate(sorted_edges):
+        _add_can_edge(G, edge.src, edge.dst, edge.action_type, action_id=str(idx), description=edge.description)

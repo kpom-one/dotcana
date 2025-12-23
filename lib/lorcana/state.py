@@ -6,6 +6,7 @@ Persistence handled separately in lib/core/persistence.py
 """
 import networkx as nx
 from lib.lorcana.cards import get_card_db
+from lib.lorcana.helpers import get_player_zone
 
 
 class LorcanaState:
@@ -41,7 +42,7 @@ class LorcanaState:
         Mutates: graph (adds card nodes), deck_ids (removes drawn cards)
         """
         deck_ids = self.deck1_ids if player == 1 else self.deck2_ids
-        hand_zone = f"z.p{player}.hand"
+        hand_zone = get_player_zone(f"p{player}", 'hand')
 
         # Draw cards
         for card_id in deck_ids[:count]:
