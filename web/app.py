@@ -10,11 +10,10 @@ from pathlib import Path
 # Add parent dir to path to import from lib/
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import subprocess
-
 from flask import Flask, render_template
 from lib.core.graph import load_dot, get_node_attr, edges_by_label
 from lib.core.navigation import read_actions_file
+from lib.lorcana.execute import apply_action_at_path
 
 app = Flask(__name__)
 
@@ -26,30 +25,40 @@ def browse(subpath=''):
     base_path = Path(__file__).parent.parent / 'output'
     current_path = base_path / subpath if subpath else base_path
 
-    # If directory exists but has no game.dot, apply the action
-    if current_path.exists() and current_path.is_dir() and not (current_path / 'game.dot').exists():
-        # Check if parent has a game.dot (meaning this is an action directory)
-        if (current_path.parent / 'game.dot').exists():
-            # Shell out to rules-engine to apply the action
-            python_path = Path(__file__).parent.parent / '.venv' / 'bin' / 'python'
-            subprocess.run([str(python_path), 'bin/rules-engine.py', 'play', str(current_path)],
-                         cwd=Path(__file__).parent.parent,
-                         capture_output=True)
+    # Auto-generate state if it doesn't exist (recursive)
+    if subpath and not (current_path / 'game.dot').exists():
+        apply_action_at_path(current_path)
 
-    # List child directories (available actions/states)
-    children = []
+    # Read path history
+    path_history = []
+    path_file = current_path / 'path.txt'
+    if path_file.exists():
+        with open(path_file) as f:
+            path_history = [line.rstrip() for line in f if line.strip()]
+
+    # Get available actions and mark which are explored
+    actions = []
+    explored_actions = set()
+
+    # List child directories (explored actions)
     if current_path.exists() and current_path.is_dir():
-        children = sorted([d.name for d in current_path.iterdir() if d.is_dir()])
+        explored_actions = {d.name for d in current_path.iterdir() if d.is_dir()}
 
-    # Visualize game state and get actions if it exists
-    state_view = None
-    action_descriptions = {}
+    # Read all available actions
     game_file = current_path / 'game.dot'
+    state_view = None
     if game_file.exists():
         G = load_dot(game_file)
         state_view = visualize_game_graph(G)
-        actions = read_actions_file(current_path)
-        action_descriptions = {a['id']: a['description'] for a in actions}
+
+        # Get actions with explored flag
+        actions_list = read_actions_file(current_path)
+        for action in actions_list:
+            actions.append({
+                'id': action['id'],
+                'description': action['description'],
+                'explored': action['id'] in explored_actions
+            })
 
     # Breadcrumb path for navigation
     parts = subpath.split('/') if subpath else []
@@ -66,8 +75,8 @@ def browse(subpath=''):
     return render_template('game.html',
                          current_path=subpath,
                          breadcrumbs=breadcrumbs,
-                         children=children,
-                         action_descriptions=action_descriptions,
+                         path_history=path_history,
+                         actions=actions,
                          state=state_view)
 
 
