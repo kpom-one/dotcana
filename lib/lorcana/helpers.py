@@ -34,6 +34,20 @@ def get_player_zone(player: str, zone_kind: str) -> str:
     return f"z.{player}.{zone_kind}"
 
 
+def get_player_step(player: str, step: str) -> str:
+    """
+    Get step node ID for a player.
+
+    Args:
+        player: Player ID ("p1" or "p2")
+        step: Step type ("ready", "set", "draw", "main", "end")
+
+    Returns:
+        Step node ID (e.g., "step.p1.main")
+    """
+    return f"step.{player}.{step}"
+
+
 def get_game_context(G):
     """
     Get common game state information.

@@ -72,14 +72,18 @@ Perfect for:
 | `Game`   | `turn`: int                                      |
 | `Player` | `lore`: int, `ink_drops`: int, `ink_total`: int  |
 | `Zone`   | `kind`: {hand, deck, play, inkwell, discard}     |
+| `Step`   | `player`: {p1, p2}, `step`: {ready, set, draw, main, end} |
 | `Card`   | `card_id`, `label`, `tapped`, `entered_play`     |
 
 Card nodes created **lazily** when drawn from deck.
+
+**Phase nodes** (10 total: `step.p1.ready` through `step.p2.end`) represent turn structure. Temporal effects can point to phase nodes to specify duration ("until end of turn" → UNTIL edge to `step.p1.end`).
 
 ### Edge Schema
 
 **Structural**:
 - `CURRENT_TURN`: Game → Player (whose turn)
+- `CURRENT_STEP`: Game → Step (current phase: ready/set/draw/main/end)
 - `OWNS`: Zone → Player (ownership)
 - `IN`: Card → Zone (location)
 

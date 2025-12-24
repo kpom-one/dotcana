@@ -4,7 +4,7 @@ Compute legal actions (CAN_* edges) from Lorcana game state.
 Orchestrates mechanics to compute all legal actions.
 """
 import networkx as nx
-from lib.lorcana.mechanics.end import compute_can_pass
+from lib.lorcana.mechanics.turn import compute_can_pass
 from lib.lorcana.mechanics.ink import compute_can_ink
 from lib.lorcana.mechanics.play import compute_can_play
 from lib.lorcana.mechanics.quest import compute_can_quest
@@ -30,6 +30,11 @@ def _add_can_edge(G: nx.MultiDiGraph, src: str, dst: str, action_type: str, acti
 def compute_all(G: nx.MultiDiGraph) -> None:
     """Recompute all CAN_* edges from current state."""
     _clear_can_edges(G)
+
+    # Don't compute actions if game is over
+    game_over = G.nodes.get('game', {}).get('game_over', '0')
+    if game_over == '1':
+        return
 
     # Collect edges from all mechanics
     edges_to_add = []

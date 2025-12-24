@@ -5,6 +5,7 @@ No filesystem knowledge. Just graph + game logic.
 Persistence handled separately in lib/core/persistence.py
 """
 import networkx as nx
+from lib.core.graph import get_node_attr
 from lib.lorcana.cards import get_card_db
 from lib.lorcana.helpers import get_player_zone
 
@@ -65,9 +66,19 @@ class LorcanaState:
         self.graph.nodes[card_node]['exerted'] = '0'
 
     def add_lore(self, player: str, amount: int):
-        """Add lore to player."""
-        current = int(self.graph.nodes[player].get('lore', 0))
-        self.graph.nodes[player]['lore'] = str(current + amount)
+        """
+        Add lore to player and check for win condition.
+
+        Player wins immediately if they reach 20+ lore.
+        """
+        current = int(get_node_attr(self.graph, player, 'lore', '0'))
+        new_lore = current + amount
+        self.graph.nodes[player]['lore'] = str(new_lore)
+
+        # Check win condition
+        if new_lore >= 20:
+            self.graph.nodes['game']['winner'] = player
+            self.graph.nodes['game']['game_over'] = '1'
 
     def move_card(self, card_node: str, to_zone: str):
         """

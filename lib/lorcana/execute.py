@@ -10,7 +10,7 @@ from lib.core.graph import can_edges
 from lib.core.persistence import load_state, save_state
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.compute import compute_all
-from lib.lorcana.mechanics.end import execute_pass
+from lib.lorcana.mechanics.turn import advance_turn
 from lib.lorcana.mechanics.ink import execute_ink
 from lib.lorcana.mechanics.play import execute_play
 from lib.lorcana.mechanics.quest import execute_quest
@@ -21,7 +21,7 @@ from lib.lorcana.state_based_effects import check_state_based_effects
 def execute_action(state: LorcanaState, action_type: str, from_node: str, to_node: str) -> None:
     """Execute an action, mutating the state."""
     if action_type == "CAN_PASS":
-        execute_pass(state, from_node, to_node)
+        advance_turn(state, from_node, to_node)
     elif action_type == "CAN_INK":
         execute_ink(state, from_node, to_node)
     elif action_type == "CAN_PLAY":

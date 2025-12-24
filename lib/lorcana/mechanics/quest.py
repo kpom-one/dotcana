@@ -56,10 +56,7 @@ def execute_quest(state, from_node: str, to_node: str) -> None:
     # Tap the card
     state.graph.nodes[from_node]['tapped'] = '1'
 
-    # Get lore value and add to player
+    # Get lore value and add to player (checks win condition)
     card_data = get_card_data(state.graph, from_node)
     lore_value = card_data['lore']
-
-    player = to_node
-    current_lore = int(get_node_attr(state.graph, player, 'lore', 0))
-    state.graph.nodes[player]['lore'] = str(current_lore + lore_value)
+    state.add_lore(to_node, lore_value)
