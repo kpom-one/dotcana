@@ -9,7 +9,7 @@ import networkx as nx
 from pathlib import Path
 
 from lib.core.graph import load_dot, save_dot
-from lib.core.persistence import load_state, save_state
+from lib.core.file_store import FileStore
 from lib.core.seed import parse_seed
 from lib.core.navigation import format_actions
 from lib.lorcana.cards import get_card_db
@@ -152,8 +152,10 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
     if not hand_spec:
         raise ValueError(f"Invalid seed format: {seed}")
 
+    store = FileStore()
+
     # Load parent state
-    parent = load_state(matchdir, LorcanaState)
+    parent = store.load_state(matchdir, LorcanaState)
 
     # Build shuffled decks from .txt files
     deck1_txt = matchdir / DECK1_SOURCE
@@ -172,6 +174,6 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
     compute_all(state.graph)
 
     # Save to seed path
-    save_state(state, matchdir / seed, format_actions_fn=format_actions)
+    store.save_state(state, matchdir / seed, format_actions_fn=format_actions)
 
     return seed

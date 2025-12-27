@@ -7,7 +7,7 @@ Routes to specific mechanic implementations.
 from pathlib import Path
 import sys
 from lib.core.graph import can_edges
-from lib.core.persistence import load_state, save_state
+from lib.core.file_store import FileStore
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.compute import compute_all
 from lib.lorcana.mechanics.turn import advance_turn
@@ -49,21 +49,22 @@ def apply_action_at_path(path: Path) -> None:
     from lib.core.navigation import format_actions
 
     path = Path(path)
+    store = FileStore()
 
     # If state already exists, nothing to do
-    if (path / "game.dot").exists():
+    if store.state_exists(path):
         return
 
     # Recursively ensure parent exists
     parent_path = path.parent
-    if parent_path != path and not (parent_path / "game.dot").exists():
+    if parent_path != path and not store.state_exists(parent_path):
         apply_action_at_path(parent_path)
 
     # Now apply this action
     action_id = path.name
 
     # Load parent state
-    parent = load_state(parent_path, LorcanaState)
+    parent = store.load_state(parent_path, LorcanaState)
 
     # Find the action edge that matches this ID
     action_found = False
@@ -78,4 +79,4 @@ def apply_action_at_path(path: Path) -> None:
         raise ValueError(f"Action {action_id} not found in parent state")
 
     # Save new state at action path
-    save_state(parent, path, format_actions_fn=format_actions)
+    store.save_state(parent, path, format_actions_fn=format_actions)

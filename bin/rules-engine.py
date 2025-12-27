@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from lib.core.graph import get_node_attr, edges_by_label
-from lib.core.persistence import load_state
+from lib.core.file_store import FileStore
 from lib.core.navigation import read_actions_file
 from lib.lorcana.setup import init_game, shuffle_and_draw
 from lib.lorcana.state import LorcanaState
@@ -66,12 +66,13 @@ def cmd_show(game_dot: str) -> None:
 def cmd_play(path: str) -> None:
     """Navigate to state, apply action if needed, show available actions."""
     path = Path(path)
+    store = FileStore()
 
     # Ensure state exists (recursively applies actions if needed)
     apply_action_at_path(path)
 
     # Load state for game status info
-    state = load_state(path, LorcanaState)
+    state = store.load_state(path, LorcanaState)
 
     # Read available actions from actions.txt
     actions = read_actions_file(path)
