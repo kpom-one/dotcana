@@ -77,20 +77,21 @@ just clear
 
 ## What Works
 
-- ✅ Ink cards, play characters, quest for lore, end turn
+- ✅ Ink cards, play characters, quest for lore, challenge characters, end turn
+- ✅ Win detection (20 lore victory, deck-out)
 - ✅ Deterministic shuffle with reproducible seeds
 - ✅ Lazy state computation (only compute paths you explore)
 - ✅ Sequential action IDs (0, 1, 2...) - no collisions
 - ✅ Navigation files (path.txt, actions.txt)
 - ✅ Web viewer for visual exploration
+- ✅ In-memory API for fast batch operations (GameSession)
 - ✅ Recursive path building (`just play long/path/to/state` works)
 
 ## What Doesn't (Yet)
 
-- ❌ Challenge characters
 - ❌ Card abilities and effects
 - ❌ Singing songs
-- ❌ Win condition detection
+- ❌ Effect modifiers (strength/willpower buffs)
 
 ## Example: Replaying a Game
 
@@ -128,5 +129,3 @@ The same seed + same moves = same game state. Perfect for playtesting, bug repor
 **Navigation files**: Human-readable summaries (path.txt, actions.txt) alongside machine-readable graph (game.dot).
 
 For deep technical details (graph schema, state representation, AI/ML use cases) → see [ARCHITECTURE.md](ARCHITECTURE.md)
-
-For playtesting and manual data capture → see [TESTING.md](TESTING.md)

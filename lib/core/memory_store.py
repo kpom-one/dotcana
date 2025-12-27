@@ -84,7 +84,7 @@ class MemoryStore(StateStore):
         """
         return str(path) in self._states
 
-    def get_actions(self, path: Path | str) -> list[str]:
+    def get_actions(self, path: Path | str) -> list[dict]:
         """
         Get formatted actions for a state (if available).
 
@@ -92,7 +92,7 @@ class MemoryStore(StateStore):
             path: Key for the state
 
         Returns:
-            List of formatted action strings, or empty list if not available
+            List of action dicts with 'id' and 'description' keys
         """
         return self._actions.get(str(path), [])
 

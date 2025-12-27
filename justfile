@@ -80,7 +80,7 @@ test:
     just clear
     just match data/decks/bs01.txt data/decks/rp01.txt
     just shuffle b013 "b123456.0123456.ab"
-    just play output/b013/b123456.0123456.ab/0/1/0/1/1/0/6 
+    just play output/b013/b123456.0123456.ab/0/1/0/1/1/0/7 
 
     echo "Test game ready:"
-    echo "  just play output/b013/b123456.0123456.ab/0/1/0/1/1/0/6"
+    echo "  just play output/b013/b123456.0123456.ab/0/1/0/1/1/0/7"

@@ -24,16 +24,17 @@ class GameSession:
     No filesystem I/O - all operations in memory.
     """
 
-    def __init__(self, initial_state: LorcanaState, store: StateStore = None):
+    def __init__(self, initial_state: LorcanaState, store: StateStore = None, root_key: str = "root"):
         """
         Create game session from initial state.
 
         Args:
             initial_state: Starting game state
             store: Storage backend (defaults to MemoryStore)
+            root_key: Key/path for root state (defaults to "root")
         """
         self.store = store or MemoryStore()
-        self.root_key = "root"
+        self.root_key = root_key
         self.current_key = self.root_key
 
         # Save initial state
@@ -51,9 +52,11 @@ class GameSession:
         Returns:
             GameSession instance
         """
+        path = Path(path)
+        store = store or MemoryStore()
         file_store = FileStore()
         state = file_store.load_state(path, LorcanaState)
-        return cls(state, store=store)
+        return cls(state, store=store, root_key=str(path))
 
     def get_state(self) -> LorcanaState:
         """Get current game state."""

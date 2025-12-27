@@ -6,8 +6,13 @@ Commands:
     init <deck1.txt> <deck2.txt>   - Create matchup from decklists
     shuffle <matchdir> <seed>      - Shuffle and deal starting hands
     show <game.dot>                - Show available actions
+    play <path> [--store=file|memory] - Navigate and show state
+
+Options:
+    --store=file|memory           Storage backend (default: file)
 """
 import sys
+import argparse
 from pathlib import Path
 
 # Add lib to path
@@ -15,10 +20,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from lib.core.graph import get_node_attr, edges_by_label
 from lib.core.file_store import FileStore
-from lib.core.navigation import read_actions_file
+from lib.core.memory_store import MemoryStore
+from lib.core.navigation import read_actions_file, format_actions
 from lib.lorcana.setup import init_game, shuffle_and_draw
 from lib.lorcana.state import LorcanaState
-from lib.lorcana.execute import apply_action_at_path
+from lib.lorcana.execute import apply_action_at_path, execute_action
+from lib.core.graph import can_edges
 
 
 def cmd_init(deck1: str, deck2: str) -> None:
@@ -63,21 +70,31 @@ def cmd_show(game_dot: str) -> None:
         print(f"  [{a['id']}] {a['description']}")
 
 
-def cmd_play(path: str) -> None:
+def cmd_play(path: str, store_type: str = 'file') -> None:
     """Navigate to state, apply action if needed, show available actions."""
     path = Path(path)
-    store = FileStore()
 
-    # Ensure state exists (recursively applies actions if needed)
-    apply_action_at_path(path)
+    # Create appropriate store
+    if store_type == 'file':
+        store = FileStore()
+        # Ensure state exists (recursively applies actions if needed)
+        apply_action_at_path(path)
+    else:
+        # Memory store - load from file first
+        file_store = FileStore()
+        if not file_store.state_exists(path):
+            apply_action_at_path(path)
+        state = file_store.load_state(path, LorcanaState)
+        store = MemoryStore()
+        store.save_state(state, str(path), format_actions_fn=format_actions)
 
-    # Load state for game status info
+    # Load state for display
     state = store.load_state(path, LorcanaState)
 
-    # Read available actions from actions.txt
-    actions = read_actions_file(path)
+    # Get available actions from store
+    actions = store.get_actions(path)
 
-    print(f"[rules-engine] play: {path}", file=sys.stderr)
+    print(f"[rules-engine] play: {path} (store={store_type})", file=sys.stderr)
 
     # Show game state summary
 
@@ -134,10 +151,12 @@ def main():
         cmd_show(sys.argv[2])
 
     elif cmd == "play":
-        if len(sys.argv) != 3:
-            print("Usage: rules-engine.py play <path>")
-            sys.exit(1)
-        cmd_play(sys.argv[2])
+        # Parse --store flag
+        parser = argparse.ArgumentParser(prog='rules-engine.py play')
+        parser.add_argument('path')
+        parser.add_argument('--store', choices=['file', 'memory'], default='file')
+        args = parser.parse_args(sys.argv[2:])
+        cmd_play(args.path, args.store)
 
     else:
         print(f"Unknown command: {cmd}")

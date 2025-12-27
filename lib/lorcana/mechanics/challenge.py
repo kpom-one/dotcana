@@ -36,8 +36,8 @@ def compute_can_challenge(G: nx.MultiDiGraph) -> list[ActionEdge]:
         if card_data['strength'] <= 0:
             continue
 
-        # Must be ready (not tapped)
-        if get_node_attr(G, challenger, 'tapped', '0') == '1':
+        # Must be ready (not exerted)
+        if get_node_attr(G, challenger, 'exerted', '0') == '1':
             continue
 
         # Must be dry (entered play before this turn)
@@ -54,7 +54,7 @@ def compute_can_challenge(G: nx.MultiDiGraph) -> list[ActionEdge]:
                 continue
 
             # Must be exerted to be challenged
-            if get_node_attr(G, defender, 'tapped', '0') != '1':
+            if get_node_attr(G, defender, 'exerted', '0') != '1':
                 continue
 
             # Valid challenge!
@@ -69,9 +69,9 @@ def compute_can_challenge(G: nx.MultiDiGraph) -> list[ActionEdge]:
 
 
 def execute_challenge(state, attacker: str, defender: str) -> None:
-    """Execute challenge action: tap attacker, deal damage, check for banish."""
-    # 1. Tap (exert) the attacker
-    state.graph.nodes[attacker]['tapped'] = '1'
+    """Execute challenge action: exert attacker, deal damage, check for banish."""
+    # 1. Exert the attacker
+    state.graph.nodes[attacker]['exerted'] = '1'
 
     # 2. Get strength values for both characters
     attacker_strength = get_strength(state, attacker)

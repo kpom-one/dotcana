@@ -90,12 +90,12 @@ def _end_step(state, player: str) -> None:
 
 
 def _ready_step(state, player: str) -> None:
-    """Ready step: Untap all cards in play for the new active player."""
+    """Ready step: Ready all cards in play for the new active player."""
     play_zone = get_player_zone(player, 'play')
     cards_in_play = [u for u, v, _ in edges_by_label(state.graph, "IN") if v == play_zone]
 
     for card_node in cards_in_play:
-        state.graph.nodes[card_node]['tapped'] = '0'
+        state.graph.nodes[card_node]['exerted'] = '0'
 
 
 def _set_step(state, player: str) -> None:

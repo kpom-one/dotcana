@@ -58,6 +58,6 @@ def execute_play(state, from_node: str, to_node: str) -> None:
     zone_kind = get_node_attr(state.graph, to_node, 'kind', '')
     if zone_kind == 'play':
         state.graph.nodes[from_node]['entered_play'] = str(ctx['current_turn'])
-        state.graph.nodes[from_node]['tapped'] = '0'
+        state.graph.nodes[from_node]['exerted'] = '0'
 
 

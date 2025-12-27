@@ -32,8 +32,8 @@ def compute_can_quest(G: nx.MultiDiGraph) -> list[ActionEdge]:
         if card_data.get('lore', 0) <= 0:
             continue
 
-        # Must be ready (not tapped)
-        if get_node_attr(G, card_node, 'tapped', '0') == '1':
+        # Must be ready (not exerted)
+        if get_node_attr(G, card_node, 'exerted', '0') == '1':
             continue
 
         # Must be dry (entered play before this turn)
@@ -52,9 +52,9 @@ def compute_can_quest(G: nx.MultiDiGraph) -> list[ActionEdge]:
 
 
 def execute_quest(state, from_node: str, to_node: str) -> None:
-    """Execute quest action: tap card, add lore to player."""
-    # Tap the card
-    state.graph.nodes[from_node]['tapped'] = '1'
+    """Execute quest action: exert card, add lore to player."""
+    # Exert the card
+    state.graph.nodes[from_node]['exerted'] = '1'
 
     # Get lore value and add to player (checks win condition)
     card_data = get_card_data(state.graph, from_node)

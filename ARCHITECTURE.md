@@ -69,11 +69,11 @@ Perfect for:
 
 | type     | attributes                                       |
 | -------- | ------------------------------------------------ |
-| `Game`   | `turn`: int                                      |
-| `Player` | `lore`: int, `ink_drops`: int, `ink_total`: int  |
+| `Game`   | `turn`: int, `game_over`: bool, `winner`: str    |
+| `Player` | `lore`: int, `ink_drops`: int, `ink_total`: int, `ink_available`: int |
 | `Zone`   | `kind`: {hand, deck, play, inkwell, discard}     |
 | `Step`   | `player`: {p1, p2}, `step`: {ready, set, draw, main, end} |
-| `Card`   | `card_id`, `label`, `tapped`, `entered_play`     |
+| `Card`   | `card_id`, `label`, `exerted`, `damage`, `entered_play` |
 
 Card nodes created **lazily** when drawn from deck.
 
@@ -92,6 +92,7 @@ Card nodes created **lazily** when drawn from deck.
 - `CAN_INK`: Card → Zone
 - `CAN_PLAY`: Card → Zone
 - `CAN_QUEST`: Card → Player
+- `CAN_CHALLENGE`: Card → Card (attacker → defender)
 - Each edge has attributes: `action_type`, `action_id`
 
 ### Action IDs
@@ -113,7 +114,7 @@ Sequential integers (0, 1, 2...) assigned deterministically:
 digraph {
     game [type="Game", turn="3"];
     p1 [type="Player", lore="5"];
-    "p1.card.a" [type="Card", tapped="0"];
+    "p1.card.a" [type="Card", exerted="0"];
 
     game -> p1 [label="CURRENT_TURN"];
     "p1.card.a" -> "z.p1.play" [label="IN"];
@@ -233,20 +234,23 @@ All data accessible via standard tools:
 ### API/Programmatic Access
 
 ```python
-from lib.lorcana.state import LorcanaState
+from lib.lorcana.game_api import GameSession
 
-# Load any game state
-state = LorcanaState("output/b013/seed/0/1/2")
-state.load()
+# Load from existing file-based state
+session = GameSession.from_file("output/b013/seed/0/1/2")
 
-# Query graph
-cards_in_play = [n for n in state.graph.nodes()
-                 if state.graph.nodes[n].get('type') == 'Card']
+# Get available actions
+actions = session.get_actions()  # [{'id': '0', 'description': '...'}, ...]
 
-# Apply actions programmatically
-from lib.lorcana.execute import execute_action
-execute_action(state, "CAN_PLAY", "p1.card.a", "z.p1.play")
-state.save()
+# Apply action by ID
+session.apply_action("0")
+
+# Play random until game ends
+path = session.play_until_game_over()
+
+# Check winner
+if session.is_game_over():
+    winner = session.get_winner()  # "p1" or "p2"
 ```
 
 ## Performance Characteristics

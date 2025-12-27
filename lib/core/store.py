@@ -52,3 +52,16 @@ class StateStore(ABC):
             True if state exists, False otherwise
         """
         pass
+
+    @abstractmethod
+    def get_actions(self, path: Path | str) -> list[dict]:
+        """
+        Get available actions for a state.
+
+        Args:
+            path: Identifier for the state
+
+        Returns:
+            List of action dicts with 'id' and 'description' keys
+        """
+        pass

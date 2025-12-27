@@ -3,10 +3,11 @@ File-based state storage using DOT files.
 
 Persists game states to filesystem as .dot files and .dek files.
 """
+import copy
 from pathlib import Path
 from lib.core.store import StateStore
 from lib.core.graph import load_dot, save_dot
-from lib.core.navigation import write_path_file, write_actions_file
+from lib.core.navigation import write_path_file, write_actions_file, read_actions_file
 
 # Deck file names
 _DEK1_FILE = "deck1.dek"
@@ -19,11 +20,15 @@ class FileStore(StateStore):
     File-based state storage.
 
     Saves states as DOT graphs and deck lists to filesystem.
+    Caches loaded states to avoid repeated disk reads.
     """
+
+    def __init__(self):
+        self._cache = {}  # path -> state
 
     def load_state(self, path: Path | str, state_class):
         """
-        Load game state from filesystem.
+        Load game state from filesystem (cached).
 
         Args:
             path: Directory containing game.dot and deck files
@@ -36,6 +41,11 @@ class FileStore(StateStore):
             FileNotFoundError: If game.dot doesn't exist
         """
         path = Path(path)
+        cache_key = str(path)
+
+        if cache_key in self._cache:
+            return copy.deepcopy(self._cache[cache_key])
+
         game_file = path / _GAME_FILE
 
         if not game_file.exists():
@@ -45,7 +55,9 @@ class FileStore(StateStore):
         deck1_ids = self._load_deck(path, player=1)
         deck2_ids = self._load_deck(path, player=2)
 
-        return state_class(graph, deck1_ids, deck2_ids)
+        state = state_class(graph, deck1_ids, deck2_ids)
+        self._cache[cache_key] = state
+        return state
 
     def save_state(self, state, path: Path | str, format_actions_fn=None):
         """
@@ -63,6 +75,9 @@ class FileStore(StateStore):
         save_dot(state.graph, path / _GAME_FILE)
         self._save_deck(state.deck1_ids, path, player=1)
         self._save_deck(state.deck2_ids, path, player=2)
+
+        # Update cache
+        self._cache[str(path)] = state
 
         # Write navigation files if formatter provided
         if format_actions_fn:
@@ -82,6 +97,18 @@ class FileStore(StateStore):
         """
         path = Path(path)
         return (path / _GAME_FILE).exists()
+
+    def get_actions(self, path: Path | str) -> list[dict]:
+        """
+        Get available actions from actions.txt.
+
+        Args:
+            path: Directory containing actions.txt
+
+        Returns:
+            List of action dicts with 'id' and 'description' keys
+        """
+        return read_actions_file(Path(path))
 
     # ========== Internal Helpers ==========
 
