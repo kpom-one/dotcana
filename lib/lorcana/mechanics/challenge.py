@@ -5,7 +5,7 @@ Compute when characters can challenge, and execute the challenge action.
 """
 import networkx as nx
 from lib.core.graph import edges_by_label, get_node_attr
-from lib.lorcana.cards import get_strength, get_willpower
+from lib.lorcana.cards import get_strength
 from lib.lorcana.helpers import ActionEdge, get_game_context, get_card_data
 
 

@@ -65,15 +65,9 @@ show hash seed="":
 play path:
     {{python}} bin/rules-engine.py play "{{path}}"
 
-# Start web viewer
-# Usage: just serve
-serve:
-    @echo "Starting web viewer at http://localhost:5000"
-    @echo "Press Ctrl+C to stop"
-    {{python}} web/app.py
 
 # Set up deterministic test game
-test:
+demo:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -84,3 +78,29 @@ test:
 
     echo "Test game ready:"
     echo "  just play output/b013/b123456.0123456.ab/0/1/0/1/1/0/7"
+
+# Generate random games
+# Usage: just generate-games 5 10  (5 seeds, 10 games each)
+generate-games num_seeds="1" games_per_seed="1":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Create matchup (uses fixed decks for now)
+    hash=$({{python}} bin/rules-engine.py init "data/decks/bs01.txt" "data/decks/rp01.txt")
+    echo "Matchup: ${hash}"
+
+    # Generate random seeds and play games
+    for i in $(seq 1 {{num_seeds}}); do
+        # Generate random seed (no dots = true random shuffle)
+        seed=$({{python}} -c "import random, string; print(''.join(random.choices(string.ascii_lowercase + string.digits, k=8)))")
+
+        echo "Seed $i: ${seed}"
+        {{python}} bin/rules-engine.py shuffle "output/${hash}" "${seed}" > /dev/null
+
+        # Play games for this seed
+        {{python}} bin/play-random.py "output/${hash}/${seed}" {{games_per_seed}}
+    done
+
+    echo ""
+    echo "Done. Generated {{num_seeds}} seeds with {{games_per_seed}} games each."
+    du -sh output/

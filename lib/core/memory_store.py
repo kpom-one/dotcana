@@ -7,7 +7,6 @@ Useful for performance-critical operations like game tree search.
 from pathlib import Path
 from copy import deepcopy
 from lib.core.store import StateStore
-from lib.core.navigation import write_path_file, write_actions_file
 
 
 class MemoryStore(StateStore):

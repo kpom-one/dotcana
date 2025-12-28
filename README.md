@@ -14,9 +14,6 @@ just test
 # Explore the game tree
 just play output/b013/b123456.0123456.ab/0/1/0/6
 
-# Or use the web viewer
-just serve
-# Visit http://localhost:5000
 ```
 
 ## Understanding Paths
@@ -68,9 +65,6 @@ just shuffle b013 "b123456.0123456.ab"
 # Navigate to a state (computes it if needed)
 just play output/b013/b123456.0123456.ab/0/1
 
-# Start web viewer
-just serve
-
 # Clear all games
 just clear
 ```
@@ -83,7 +77,6 @@ just clear
 - ✅ Lazy state computation (only compute paths you explore)
 - ✅ Sequential action IDs (0, 1, 2...) - no collisions
 - ✅ Navigation files (path.txt, actions.txt)
-- ✅ Web viewer for visual exploration
 - ✅ In-memory API for fast batch operations (GameSession)
 - ✅ Recursive path building (`just play long/path/to/state` works)
 
@@ -91,6 +84,7 @@ just clear
 
 - ❌ Card abilities and effects
 - ❌ Singing songs
+- ❌ Web viewer for visual exploration
 - ❌ Effect modifiers (strength/willpower buffs)
 
 ## Example: Replaying a Game

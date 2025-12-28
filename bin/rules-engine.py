@@ -24,8 +24,7 @@ from lib.core.memory_store import MemoryStore
 from lib.core.navigation import read_actions_file, format_actions
 from lib.lorcana.setup import init_game, shuffle_and_draw
 from lib.lorcana.state import LorcanaState
-from lib.lorcana.execute import apply_action_at_path, execute_action
-from lib.core.graph import can_edges
+from lib.lorcana.execute import apply_action_at_path
 
 
 def cmd_init(deck1: str, deck2: str) -> None:

@@ -5,7 +5,6 @@ import hashlib
 import random
 import re
 import shutil
-import networkx as nx
 from pathlib import Path
 
 from lib.core.graph import load_dot, save_dot
@@ -25,22 +24,14 @@ def normalize_card_name(name: str) -> str:
     return name.lower().replace(' - ', '_').replace(' ', '_').replace('-', '_')
 
 
-def build_shuffled_deck(deck_txt: Path, hand_indices: list[int], shuffle_seed: str) -> list[str]:
+def build_deck(deck_txt: Path) -> list[str]:
     """
-    Build shuffled deck from decklist: hand cards first, then shuffled remainder.
-
-    Args:
-        deck_txt: Path to decklist.txt (format: "4 Tinker Bell - Giant Fairy")
-        hand_indices: 7 indices selecting starting hand from unique cards
-        shuffle_seed: Seed string for deterministic shuffling
+    Build unshuffled deck from decklist.
 
     Returns:
-        List of 60 card IDs: [hand cards (7), shuffled remainder (53)]
-        Card ID format: normalized_name.[a|b|c|d]
-        Example: ["tinker_bell_giant_fairy.a", "tipo_growing_son.b", ...]
+        List of 60 card IDs in decklist order
     """
-    # Parse decklist: "4 Tinker Bell - Giant Fairy" -> (4, "Tinker Bell - Giant Fairy")
-    cards = []  # [(count, name), ...]
+    cards = []
     with open(deck_txt) as f:
         for line in f:
             line = line.strip()
@@ -50,19 +41,59 @@ def build_shuffled_deck(deck_txt: Path, hand_indices: list[int], shuffle_seed: s
             if match:
                 cards.append((int(match.group(1)), match.group(2).strip()))
 
-    # Build unique card list (for hand index lookup)
-    unique_cards = [name for count, name in cards]
+    deck = []
+    for count, name in cards:
+        base = normalize_card_name(name)
+        for i in range(count):
+            suffix = chr(ord('a') + i)
+            deck.append(f"{base}.{suffix}")
 
-    # Expand to full deck with normalized IDs and copy suffixes
-    card_map = {}  # card_name -> [card_ids]
+    return deck
+
+
+def build_shuffled_deck(deck_txt: Path, shuffle_seed: str, hand_indices: list[int] | None = None) -> list[str]:
+    """
+    Build shuffled deck from decklist.
+
+    Args:
+        deck_txt: Path to decklist.txt (format: "4 Tinker Bell - Giant Fairy")
+        shuffle_seed: Seed string for deterministic shuffling
+        hand_indices: Optional 7 indices selecting starting hand from unique cards.
+                      If None, does true random shuffle.
+
+    Returns:
+        List of 60 card IDs (top 7 become hand)
+    """
+    # Parse decklist
+    cards = []
+    with open(deck_txt) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            match = re.match(r"(\d+)\s+(.+)", line)
+            if match:
+                cards.append((int(match.group(1)), match.group(2).strip()))
+
+    # Build card map
+    card_map = {}
     for count, name in cards:
         base = normalize_card_name(name)
         card_map[name] = []
         for i in range(count):
-            suffix = chr(ord('a') + i)  # a, b, c, d (supports up to 4-of)
+            suffix = chr(ord('a') + i)
             card_map[name].append(f"{base}.{suffix}")
 
-    # Extract hand cards (first 7)
+    rng = random.Random(shuffle_seed)
+
+    if hand_indices is None:
+        # True random shuffle
+        deck = [card_id for ids in card_map.values() for card_id in ids]
+        rng.shuffle(deck)
+        return deck
+
+    # Hand-spec mode: specific cards go to hand first
+    unique_cards = [name for count, name in cards]
     hand_cards = []
     for idx in hand_indices:
         if idx >= len(unique_cards):
@@ -74,14 +105,9 @@ def build_shuffled_deck(deck_txt: Path, hand_indices: list[int], shuffle_seed: s
 
         hand_cards.append(card_map[card_name].pop(0))
 
-    # Collect remaining 53 cards
     remaining = [card_id for ids in card_map.values() for card_id in ids]
-
-    # Shuffle remainder deterministically
-    rng = random.Random(shuffle_seed)
     rng.shuffle(remaining)
 
-    # Return hand on top, shuffled remainder below
     return hand_cards + remaining
 
 
@@ -142,16 +168,13 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
 
     Args:
         matchdir: Matchup directory (e.g., "output/b013")
-        seed: Hand-spec seed (xxxxxxx.xxxxxxx.xx)
+        seed: Either a simple seed string (true random shuffle)
+              or hand-spec format (xxxxxxx.xxxxxxx.xx)
 
     Returns:
         Seed (for display)
     """
     matchdir = Path(matchdir)
-    hand_spec = parse_seed(seed)
-    if not hand_spec:
-        raise ValueError(f"Invalid seed format: {seed}")
-
     store = FileStore()
 
     # Load parent state
@@ -160,8 +183,18 @@ def shuffle_and_draw(matchdir: str | Path, seed: str) -> str:
     # Build shuffled decks from .txt files
     deck1_txt = matchdir / DECK1_SOURCE
     deck2_txt = matchdir / DECK2_SOURCE
-    deck1_ids = build_shuffled_deck(deck1_txt, hand_spec['p1_hand'], hand_spec['shuffle_seed'])
-    deck2_ids = build_shuffled_deck(deck2_txt, hand_spec['p2_hand'], hand_spec['shuffle_seed'])
+
+    if '.' in seed:
+        # Hand-spec format
+        hand_spec = parse_seed(seed)
+        if not hand_spec:
+            raise ValueError(f"Invalid hand-spec seed format: {seed}")
+        deck1_ids = build_shuffled_deck(deck1_txt, seed, hand_spec['p1_hand'])
+        deck2_ids = build_shuffled_deck(deck2_txt, seed, hand_spec['p2_hand'])
+    else:
+        # Simple seed - true random shuffle
+        deck1_ids = build_shuffled_deck(deck1_txt, seed + "_p1")
+        deck2_ids = build_shuffled_deck(deck2_txt, seed + "_p2")
 
     # Create new state with decks
     state = LorcanaState(parent.graph, deck1_ids, deck2_ids)

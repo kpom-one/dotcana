@@ -8,10 +8,7 @@ import os
 from pathlib import Path
 from lib.core.store import StateStore
 from lib.core.graph import load_dot, save_dot
-from lib.core.navigation import write_path_file, write_actions_file, read_actions_file
-
-# Debug flag: set to True to write path.txt files
-DEBUG_WRITE_PATH_FILE = False
+from lib.core.navigation import write_actions_file, read_actions_file
 
 # File names
 _DEK1_FILE = "deck1.dek"
@@ -84,10 +81,8 @@ class FileStore(StateStore):
         # Update cache
         self._cache[str(path)] = state
 
-        # Write navigation files if formatter provided
+        # Write actions file if formatter provided
         if format_actions_fn:
-            if DEBUG_WRITE_PATH_FILE:
-                write_path_file(path)
             actions = format_actions_fn(state.graph)
             write_actions_file(path, actions)
 
