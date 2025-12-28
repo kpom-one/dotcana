@@ -24,6 +24,10 @@ class MemoryStore(StateStore):
         self._states = {}
         # Optional: path -> formatted_actions (for navigation)
         self._actions = {}
+        # Outcomes: path -> outcome_data dict
+        self._outcomes = {}
+        # Outcome refs: path -> list of action-path suffixes
+        self._outcome_refs = {}
 
     def load_state(self, path: Path | str, state_class):
         """
@@ -100,3 +104,23 @@ class MemoryStore(StateStore):
         """Clear all stored states from memory."""
         self._states.clear()
         self._actions.clear()
+        self._outcomes.clear()
+        self._outcome_refs.clear()
+
+    def save_outcome(self, path: Path | str, suffix: str | None, data: dict) -> None:
+        """Save outcome data at a path."""
+        path = str(path)
+
+        if suffix is None:
+            # Winning state - store the actual outcome
+            self._outcomes[path] = data
+        else:
+            # Parent state - store reference suffix
+            if path not in self._outcome_refs:
+                self._outcome_refs[path] = []
+            if suffix not in self._outcome_refs[path]:
+                self._outcome_refs[path].append(suffix)
+
+    def get_outcomes(self, path: Path | str) -> list[str]:
+        """Get outcome suffixes at this state."""
+        return self._outcome_refs.get(str(path), [])

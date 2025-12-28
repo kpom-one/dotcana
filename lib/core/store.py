@@ -65,3 +65,27 @@ class StateStore(ABC):
             List of action dicts with 'id' and 'description' keys
         """
         pass
+
+    @abstractmethod
+    def save_outcome(self, path: Path | str, suffix: str | None, data: dict) -> None:
+        """
+        Save outcome data at a path.
+
+        Args:
+            path: Identifier for the state
+            suffix: Action-path suffix (e.g., "0.1.2") or None for winning state
+            data: Outcome data dict (winner, p1_lore, p2_lore)
+        """
+        pass
+
+    def get_outcomes(self, path: Path | str) -> list[str]:
+        """
+        Get outcome suffixes at this state.
+
+        Args:
+            path: Identifier for the state
+
+        Returns:
+            List of action-path suffixes (e.g., ["0.1.2", "3.4"])
+        """
+        return []

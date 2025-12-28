@@ -10,6 +10,7 @@ from lib.core.store import StateStore
 from lib.core.memory_store import MemoryStore
 from lib.core.file_store import FileStore
 from lib.core.graph import can_edges, get_node_attr
+from lib.core.outcome import backpropagate, find_seed_path
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.execute import execute_action
 from lib.lorcana.compute import compute_all
@@ -98,6 +99,22 @@ class GameSession:
 
                 # Update current position
                 self.current_key = new_key
+
+                # If game is over, save outcome and backpropagate
+                if get_node_attr(state.graph, 'game', 'game_over', '0') == '1':
+                    outcome_data = {
+                        'winner': get_node_attr(state.graph, 'game', 'winner', None),
+                        'p1_lore': int(get_node_attr(state.graph, 'p1', 'lore', '0')),
+                        'p2_lore': int(get_node_attr(state.graph, 'p2', 'lore', '0')),
+                    }
+
+                    self.store.save_outcome(new_key, None, outcome_data)
+
+                    seed_path = find_seed_path(new_key)
+                    if seed_path:
+                        backpropagate(new_key, seed_path,
+                            lambda parent, suffix: self.store.save_outcome(parent, suffix, outcome_data))
+
                 return True
 
         return False

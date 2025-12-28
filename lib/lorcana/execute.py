@@ -6,8 +6,9 @@ Routes to specific mechanic implementations.
 """
 from pathlib import Path
 import sys
-from lib.core.graph import can_edges
+from lib.core.graph import can_edges, get_node_attr
 from lib.core.file_store import FileStore
+from lib.core.outcome import backpropagate, find_seed_path
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.compute import compute_all
 from lib.lorcana.mechanics.turn import advance_turn
@@ -80,3 +81,20 @@ def apply_action_at_path(path: Path) -> None:
 
     # Save new state at action path
     store.save_state(parent, path, format_actions_fn=format_actions)
+
+    # If game is over, write outcome and backpropagate
+    if get_node_attr(parent.graph, 'game', 'game_over', '0') == '1':
+        outcome_data = {
+            'winner': get_node_attr(parent.graph, 'game', 'winner', None),
+            'p1_lore': int(get_node_attr(parent.graph, 'p1', 'lore', '0')),
+            'p2_lore': int(get_node_attr(parent.graph, 'p2', 'lore', '0')),
+        }
+
+        # Save at winning state
+        store.save_outcome(str(path), None, outcome_data)
+
+        # Backpropagate up to seed directory
+        seed_path = find_seed_path(str(path))
+        if seed_path:
+            backpropagate(str(path), seed_path,
+                lambda parent, suffix: store.save_outcome(parent, suffix, outcome_data))
