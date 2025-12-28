@@ -13,7 +13,7 @@ from lib.core.graph import can_edges, get_node_attr
 from lib.core.outcome import backpropagate, find_seed_path
 from lib.lorcana.state import LorcanaState
 from lib.lorcana.execute import execute_action
-from lib.core.navigation import format_actions
+from lib.core.navigation import format_actions, Action
 
 
 class GameSession:
@@ -62,12 +62,12 @@ class GameSession:
         """Get current game state."""
         return self.store.load_state(self.current_key, LorcanaState)
 
-    def get_actions(self) -> list[dict]:
+    def get_actions(self) -> list[Action]:
         """
         Get available actions from current state.
 
         Returns:
-            List of action dicts with 'id' and 'description' keys
+            List of Action objects
         """
         state = self.get_state()
         return format_actions(state.graph)
@@ -161,13 +161,13 @@ class GameSession:
 
         # Filter non-end actions if preference set
         if prefer_non_end:
-            non_end = [a for a in actions if a['description'] != 'end']
+            non_end = [a for a in actions if a.description != 'end']
             if non_end:
                 actions = non_end
 
         # Pick random action
         action = random.choice(actions)
-        return self.apply_action(action['id'])
+        return self.apply_action(action.id)
 
     def play_until_game_over(self, prefer_non_end: bool = True, max_actions: int = 1000) -> str:
         """
